@@ -59,7 +59,7 @@ trait SearchableTrait
         }
 
         //we sum each match to see the relevance
-        $selects = DB::raw(join(' + ', $selects) . ' as relevance');
+        $selects = \DB::raw(join(' + ', $selects) . ' as relevance');
         $query->select(['*', $selects]);
 
         //this make that we only select the matching rows
