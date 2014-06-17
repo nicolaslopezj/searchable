@@ -74,7 +74,7 @@ $data = User::search($query)
 ->toArray();
 
 // Get the count of rows of the last query
-$db_query_log = \DB::getQueryLog();
+$db_query_log = DB::getQueryLog();
 $db_query = end($db_query_log);
 $total_items = DBHelper::getQueryCount($db_query);
 
