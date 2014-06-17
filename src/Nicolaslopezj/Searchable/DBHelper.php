@@ -16,7 +16,7 @@ class DBHelper {
         $count_query = 'select count(*) as count from (' . $query . ') as results';
 
         //execute the query and get the result
-        $count = DB::select(DB::raw($count_query), $bindings)[0]->count;
+        $count = \DB::select(\DB::raw($count_query), $bindings)[0]->count;
 
         return intval($count);
     }

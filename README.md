@@ -62,8 +62,8 @@ use Nicolaslopezj\Searchable\DBHelper;
 
 ```php
 // Get the current page values
-$page = $page ? $page : 1;
-$count = $count ? $count : 20; // items per page
+$page = Input::get('page') ? Input::get('page') : 1;
+$count = Input::get('count') ? Input::get('count') : 20; // items per page
 $from = 1 + $count * ($page - 1);
 
 // Perform the search
