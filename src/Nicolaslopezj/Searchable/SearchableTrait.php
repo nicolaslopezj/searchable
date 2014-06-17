@@ -1,4 +1,4 @@
-<?php namespace nicolaslopezj\Searchable
+<?php namespace Nicolaslopezj\Searchable;
 
 trait SearchableTrait
 {

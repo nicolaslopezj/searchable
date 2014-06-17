@@ -1,4 +1,4 @@
-<?php namespace nicolaslopezj\Searchable
+<?php namespace Nicolaslopezj\Searchable;
 
 class DBHelper {
     //get the count of rows of a query
