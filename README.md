@@ -13,9 +13,9 @@ Simply add the package to your `composer.json` file and run `composer update`.
 "nicolaslopezj/searchable": "0.1.*"
 ```
 
-## Overview
+## Usage
 
-First, add the trait to your model and add your search rules.
+Add the trait to your model and your search rules.
 
 ```php
 use Nicolaslopezj\Searchable\SearchableTrait;
@@ -38,7 +38,7 @@ class User extends \Eloquent
 }
 ```
 
-Now you can search your model in a very simple way
+Now you can search your model.
 
 ```php
 // Simple search
@@ -51,9 +51,9 @@ $users = User::search($query)
 ```
 
 
-### Search Paginated
+## Search Paginated
 
-If you are going to search the model and use pagination, you have to do this
+Laravel default pagination doesn't work with this, you have to do it this way
 
 ```php
 // This class is required
