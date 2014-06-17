@@ -1,0 +1,23 @@
+{
+    "name": "nicolaslopezj/searchable",
+    "description": "Eloquent model search trait.",
+    "keywords": ["laravel", "eloquent", "search"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Nicolas Lopez",
+            "email": "nicolaslopezj@me.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0",
+        "illuminate/support": "4.2.x",
+        "illuminate/database": "4.2.x",
+    },
+    "autoload": {
+        "psr-0": {
+            "Nicolaslopezj\\Searchable": "src/"
+        }
+    },
+    "minimum-stability": "stable"
+}
