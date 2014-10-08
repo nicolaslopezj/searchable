@@ -1,72 +1,125 @@
 <?php namespace Nicolaslopezj\Searchable;
 
+/**
+ * Trait SearchableTrait
+ * @package Nicolaslopezj\Searchable
+ */
 trait SearchableTrait
 {
-    public function scopeSearch($query, $search)
-    {
-        //if no search query just return the simple query
-        if (!$search) return $query;
 
-        $selects = [];
+    /**
+     * Makes the search process
+     * @param $query
+     * @param $search
+     * @return mixed
+     */
+    public function scopeSearch($query, $search) {
 
-        //here we add the if's functions to the selects array
-        //we separate each word
-        $words = explode(' ', $search);
-        //we need to count the sum of relevance to take only the good results
-        $relevance_count = 0;
-        for ($i = 0; $i < count($this->searchable); $i++) {
-            $field = $this->searchable[$i];
-            $relevance_count += $field['relevance'];
-            //for each word and column we make a like and a =, the = has more relevance
-            //first with the =
-            $equal_fields = [];
-            foreach ($words as $word) {
-                $equal_fields[] = $field['column'] . " = '" . $word . "'";
-            }
-
-            //we join each =
-            $equal_fields = join(' || ', $equal_fields);
-
-            //we put the ='s into the if function and set the relevance
-            //if it match it adds the relevance number to the relevance column
-            $selects[] = 'if(' . $equal_fields . ', ' . $field['relevance'] * 15 . ', 0)';
-
-            //then the like
-            $like_fields = [];
-            foreach ($words as $word) {
-                $like_fields[] = $field['column'] . " LIKE '" . $word . "%'";
-            }
-
-            //we join each like
-            $like_fields = join(' || ', $like_fields);
-
-            //we put the like's into the if function and set the relevance
-            //if it match it adds the relevance number to the relevance column
-            $selects[] = 'if(' . $like_fields . ', ' . $field['relevance'] * 5 . ', 0)';
-
-            //and then the other like
-            $like_other_fields = [];
-            foreach ($words as $word) {
-                $like_other_fields[] = $field['column'] . " LIKE '%" . $word . "%'";
-            }
-
-            //we join each like
-            $like_other_fields = join(' || ', $like_other_fields);
-
-            //we put the like's into the if function and set the relevance
-            //if it match it adds the relevance number to the relevance column
-            $selects[] = 'if(' . $like_other_fields . ', ' . $field['relevance'] . ', 0)';
+        if (!$search) {
+            return $query;
         }
 
-        //we sum each match to see the relevance
-        $selects = \DB::raw(join(' + ', $selects) . ' as relevance');
-        $query->select(['*', $selects]);
+        $relevance_count = 0;
+        $words = explode(' ', $search);
 
-        //this make that we only select the matching rows
-        $query->havingRaw('relevance > ' . ($relevance_count / 4));
-        //order rows by relevance
-        $query->orderBy('relevance', 'desc');
+        $selects = [];
+        foreach ($this->getColumns() as $column => $relevance) {
+            $relevance_count += $relevance;
+            $queries = $this->getSearchQueriesForColumn($column, $relevance, $words);
+            foreach ($queries as $select) {
+                $selects[] = $select;
+            }
+        }
+
+        $this->addSelectsToQuery($query, $selects);
+        $this->filterQueryWithRelevace($query, ($relevance_count / 4));
+
+        $this->makeJoins($query);
 
         return $query;
     }
+
+    /**
+     * Returns the search columns
+     * @return array
+     */
+    protected function getColumns() {
+        return $this->searchable['columns'];
+    }
+
+    /**
+     * Returns the tables that has to join
+     * @return array
+     */
+    protected function getJoins() {
+        return $this->searchable['joins'];
+    }
+
+    /**
+     * Adds the join sql to the query
+     * @param $query
+     */
+    protected function makeJoins(&$query) {
+        foreach ($this->getJoins() as $table => $keys) {
+            $query->join($table, $keys[0], '=', $keys[1]);
+        }
+    }
+
+    /**
+     * Puts all the select clauses to the main query
+     * @param $query
+     * @param $selects
+     */
+    protected function addSelectsToQuery(&$query, $selects) {
+        $selects = \DB::raw(join(' + ', $selects) . ' as relevance');
+        $query->select([$this->getTable() . '.*', $selects]);
+    }
+
+    /**
+     * Adds relevance filter to the query
+     * @param $query
+     * @param $relevance_count
+     */
+    protected function filterQueryWithRelevace(&$query, $relevance_count) {
+        $query->havingRaw('relevance > ' . $relevance_count);
+        $query->orderBy('relevance', 'desc');
+    }
+
+    /**
+     * Returns the search queries for the specified column
+     * @param $column
+     * @param $relevance
+     * @param $words
+     * @return array
+     */
+    protected function getSearchQueriesForColumn($column, $relevance, $words) {
+        $queries = [];
+        $queries[] = $this->getSearchQuery($column, $relevance, $words, '=', 15);
+        $queries[] = $this->getSearchQuery($column, $relevance, $words, 'LIKE', 5, '', '%');
+        $queries[] = $this->getSearchQuery($column, $relevance, $words, 'LIKE', 1, '%', '%');
+        return $queries;
+    }
+
+    /**
+     * Returns the sql string for the parameters
+     * @param $column
+     * @param $relevance
+     * @param $words
+     * @param $compare
+     * @param $relevance_multiplier
+     * @param string $pre_word
+     * @param string $post_word
+     * @return string
+     */
+    protected function getSearchQuery($column, $relevance, $words, $compare, $relevance_multiplier, $pre_word = '', $post_word = '') {
+        $fields = [];
+        foreach ($words as $word) {
+            $fields[] = $column . " " . $compare . " '" . $pre_word . $word . $post_word . "'";
+        }
+
+        $fields = join(' || ', $fields);
+
+        return 'if(' . $fields . ', ' . $relevance * $relevance_multiplier . ', 0)';
+    }
+
 }
