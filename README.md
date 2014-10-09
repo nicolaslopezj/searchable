@@ -15,7 +15,7 @@ Simply add the package to your `composer.json` file and run `composer update`.
 "nicolaslopezj/searchable": "1.1.*"
 ```
 
-## Usage
+# Usage
 
 Add the trait to your model and your search rules.
 
