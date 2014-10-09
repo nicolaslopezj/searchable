@@ -1,5 +1,7 @@
 <?php namespace Nicolaslopezj\Searchable;
 
+use Illuminate\Database\Query\Expression;
+
 /**
  * Trait SearchableTrait
  * @package Nicolaslopezj\Searchable
@@ -71,7 +73,7 @@ trait SearchableTrait
      * @param $selects
      */
     protected function addSelectsToQuery(&$query, $selects) {
-        $selects = \DB::raw(join(' + ', $selects) . ' as relevance');
+        $selects = new Expression(join(' + ', $selects) . ' as relevance');
         $query->select([$this->getTable() . '.*', $selects]);
     }
 
