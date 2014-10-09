@@ -5,7 +5,7 @@ Searchable is a trait for Laravel 4.2+ that adds a simple search function to Elo
 
 Searchable allows you to perform searches in a table giving priorities to each field for the table and it's relations.
 
-This is not optimized for big searchs, but sometimes you just need to make it simple.
+This is not optimized for big searches, but sometimes you just need to make it simple.
 
 # Installation
 
