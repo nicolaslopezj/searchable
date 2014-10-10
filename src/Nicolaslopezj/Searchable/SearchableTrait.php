@@ -63,7 +63,7 @@ trait SearchableTrait
      */
     protected function makeJoins(&$query) {
         foreach ($this->getJoins() as $table => $keys) {
-            $query->join($table, $keys[0], '=', $keys[1]);
+            $query->leftJoin($table, $keys[0], '=', $keys[1]);
         }
     }
 
