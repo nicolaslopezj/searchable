@@ -12,7 +12,7 @@ This is not optimized for big searches, but sometimes you just need to make it s
 Simply add the package to your `composer.json` file and run `composer update`.
 
 ```
-"nicolaslopezj/searchable": "1.1.*"
+"nicolaslopezj/searchable": "1.*"
 ```
 
 # Usage
@@ -45,7 +45,8 @@ class User extends \Eloquent
         ],
     ];
 
-    public function posts() {
+    public function posts()
+    {
         return $this->hasMany('Post');
     }
 
@@ -61,8 +62,8 @@ $users = User::search($query)->get();
 // Search and get relations
 // It will not get the relations if you don't do this
 $users = User::search($query)
-->with('posts')
-->get();
+            ->with('posts')
+            ->get();
 ```
 
 
@@ -73,8 +74,8 @@ As easy as laravel default queries
 ```php
 // Search with relations and paginate
 $users = User::search($query)
-->with('posts')
-->paginate(20);
+            ->with('posts')
+            ->paginate(20);
 ```
 
 ## Mix queries
@@ -82,10 +83,10 @@ $users = User::search($query)
 Search method is compatible with any eloquent method. You can do things like this:
 
 ```php
-// Search only the active users
+// Search only active users
 $users = User::where('status', 'active')
-->search($query)
-->paginate(20);
+            ->search($query)
+            ->paginate(20);
 ```
 
 
@@ -136,15 +137,15 @@ SELECT *,
 -- the row
 
 -- The first checks if the column is equal to the word,
--- if then it adds relevace*15
+-- if then it adds relevance * 15
 if(title = 'Sed' || title = 'neque' || title = 'labore', 300, 0) +
 
 -- The second checks if the column starts with the word,
--- if then it adds relevace*5
+-- if then it adds relevance * 5
 if(title LIKE 'Sed%' || title LIKE 'neque%' || title LIKE 'labore%', 100, 0) + 
 
 -- The third checks if the column contains the word, 
--- if then it adds relevace*1
+-- if then it adds relevance * 1
 if(title LIKE '%Sed%' || title LIKE '%neque%' || title LIKE '%labore%', 20, 0) + 
 
 -- Repeats with each column
