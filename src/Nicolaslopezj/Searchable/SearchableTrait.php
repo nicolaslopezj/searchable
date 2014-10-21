@@ -38,6 +38,8 @@ trait SearchableTrait
 
         $this->makeJoins($query);
 
+        $this->makeGroupBy($query);
+
         return $query;
     }
 
@@ -54,6 +56,9 @@ trait SearchableTrait
      * @return array
      */
     protected function getJoins() {
+        if (!array_key_exists('joins', $this->searchable)) {
+            return [];
+        }
         return $this->searchable['joins'];
     }
 
@@ -65,6 +70,15 @@ trait SearchableTrait
         foreach ($this->getJoins() as $table => $keys) {
             $query->leftJoin($table, $keys[0], '=', $keys[1]);
         }
+    }
+
+    /**
+     * Make the query dont repeat the results
+     * @param $query
+     */
+    protected function makeGroupBy(&$query) {
+        $primary_key = $this->primaryKey;
+        $query->groupBy($primary_key);
     }
 
     /**

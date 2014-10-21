@@ -1,7 +1,7 @@
 {
     "name": "nicolaslopezj/searchable",
     "description": "Eloquent model search trait.",
-    "keywords": ["laravel", "eloquent", "search", "searchable"],
+    "keywords": ["laravel", "eloquent", "search", "searchable", "database", "model"],
     "license": "MIT",
     "authors": [
         {

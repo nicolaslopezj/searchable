@@ -5,7 +5,7 @@ Searchable is a trait for Laravel 4.2+ that adds a simple search function to Elo
 
 Searchable allows you to perform searches in a table giving priorities to each field for the table and it's relations.
 
-This is not optimized for big searches, but sometimes you just need to make it simple.
+This is not optimized for big searches, but sometimes you just need to make it simple (Although it is not slow).
 
 # Installation
 
@@ -68,34 +68,26 @@ $users = User::search($query)
 
 ## Search Paginated
 
-Laravel default pagination doesn't work with this, you have to do it this way
+As easy as laravel default queries
 
 ```php
-// This class is required
-use Nicolaslopezj\Searchable\DBHelper;
+// Search with relations and paginate
+$users = User::search($query)
+->with('posts')
+->paginate(20);
 ```
+
+## Mix queries
+
+Search method is compatible with any eloquent method. You can do things like this:
 
 ```php
-// Get the current page values
-$page = Input::get('page') ? Input::get('page') : 1;
-$count = Input::get('count') ? Input::get('count') : 20; // items per page
-$from = 1 + $count * ($page - 1);
-
-// Perform the search
-$data = User::search($query)
-->take($count)
-->skip($from - 1)
-->get()
-->toArray();
-
-// Get the count of rows of the last query
-$db_query_log = DB::getQueryLog();
-$db_query = end($db_query_log);
-$total_items = DBHelper::getQueryCount($db_query);
-
-// Create the paginator
-$users = Paginator::make($data, $total_items, $count);
+// Search only the active users
+$users = User::where('status', 'active')
+->search($query)
+->paginate(20);
 ```
+
 
 # How does it works?
 
