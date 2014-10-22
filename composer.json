@@ -14,7 +14,7 @@
         "illuminate/database": "4.2.x"
     },
     "autoload": {
-        "psr-4": {
+        "psr-0": {
             "Nicolaslopezj\\Searchable": "src/"
         }
     },
