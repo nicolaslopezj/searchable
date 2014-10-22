@@ -17,9 +17,11 @@ trait SearchableTrait
      */
     public function scopeSearch($query, $search) {
 
+        $query->select($this->getTable() . '.*');
+        $this->makeJoins($query);
+
         if ( ! $search)
         {
-            $this->makeJoins($query);
             return $query;
         }
 
@@ -37,8 +39,6 @@ trait SearchableTrait
 
         $this->addSelectsToQuery($query, $selects);
         $this->filterQueryWithRelevace($query, ($relevance_count / 4));
-
-        $this->makeJoins($query);
 
         $this->makeGroupBy($query);
 
@@ -90,7 +90,7 @@ trait SearchableTrait
      */
     protected function addSelectsToQuery(&$query, $selects) {
         $selects = new Expression(join(' + ', $selects) . ' as relevance');
-        $query->select([$this->getTable() . '.*', $selects]);
+        $query->addSelect($selects);
     }
 
     /**
