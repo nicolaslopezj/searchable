@@ -32,12 +32,9 @@ trait SearchableTrait
         foreach ($this->getColumns() as $column => $relevance)
         {
             $relevance_count += $relevance;
-            $queries = $this->getSearchQueriesForColumn($column, $relevance, $words);
 
-            foreach ($queries as $select)
-            {
-                $selects[] = $select;
-            }
+            $queries = $this->getSearchQueriesForColumn($column, $relevance, $words);
+            $selects = array_merge($queries);
         }
 
         $this->addSelectsToQuery($query, $selects);
@@ -65,12 +62,7 @@ trait SearchableTrait
      */
     protected function getJoins()
     {
-        if ( ! array_key_exists('joins', $this->searchable))
-        {
-            return [];
-        }
-
-        return $this->searchable['joins'];
+        return array_get($this->searchable, 'joins', []);
     }
 
     /**
@@ -93,8 +85,7 @@ trait SearchableTrait
      */
     protected function makeGroupBy(&$query)
     {
-        $primary_key = $this->primaryKey;
-        $query->groupBy($primary_key);
+        $query->groupBy($this->primaryKey);
     }
 
     /**
@@ -105,7 +96,7 @@ trait SearchableTrait
      */
     protected function addSelectsToQuery(&$query, $selects)
     {
-        $selects = new Expression(join(' + ', $selects) . ' as relevance');
+        $selects = new Expression(implode(' + ', $selects) . ' as relevance');
         $query->addSelect($selects);
     }
 
@@ -161,7 +152,7 @@ trait SearchableTrait
             $fields[] = $column . " " . $compare . " '" . $pre_word . $word . $post_word . "'";
         }
 
-        $fields = join(' || ', $fields);
+        $fields = implode(' || ', $fields);
 
         return 'if(' . $fields . ', ' . $relevance * $relevance_multiplier . ', 0)';
     }
