@@ -17,7 +17,9 @@ trait SearchableTrait
      */
     public function scopeSearch($query, $search) {
 
-        if (!$search) {
+        if ( ! $search)
+        {
+            $this->makeJoins($query);
             return $query;
         }
 
