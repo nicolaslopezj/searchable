@@ -34,7 +34,11 @@ trait SearchableTrait
             $relevance_count += $relevance;
 
             $queries = $this->getSearchQueriesForColumn($column, $relevance, $words);
-            $selects = array_merge($queries);
+
+            foreach ($queries as $select)
+            {
+                $selects[] = $select;
+            }
         }
 
         $this->addSelectsToQuery($query, $selects);
