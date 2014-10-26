@@ -155,7 +155,7 @@ if(resume LIKE '%Sed%' || resume LIKE '%neque%' || resume LIKE '%labore%', 5, 0)
 
 if(body = 'Sed' || body = 'neque' || body = 'labore', 30, 0) + 
 if(body LIKE 'Sed%' || body LIKE 'neque%' || body LIKE 'labore%', 10, 0) + 
-if(body LIKE '%Sed%' || body LIKE '%neque%' || body LIKE '%labore%', 2, 0) + 
+if(body LIKE '%Sed%' || body LIKE '%neque%' || body LIKE '%labore%', 2, 0)
 
 AS relevance
 FROM `posts`
