@@ -42,9 +42,11 @@ trait SearchableTrait
         }
 
         $this->addSelectsToQuery($query, $selects);
-        $this->filterQueryWithRelevace($query, ($relevance_count / 4));
-
         $this->makeGroupBy($query);
+
+        $this->makeSubquery($query);
+
+        $this->filterQueryWithRelevance($query, ($relevance_count / 4));
 
         return $query;
     }
@@ -105,14 +107,24 @@ trait SearchableTrait
     }
 
     /**
+     * Wraps the query with a subquery
+     *
+     * @param $query
+     */
+    protected function makeSubquery(&$query)
+    {
+        $query = \DB::table(null)->selectRaw('* from(' . $query->toSql() . ') as q');
+    }
+
+    /**
      * Adds relevance filter to the query
      *
      * @param $query
      * @param $relevance_count
      */
-    protected function filterQueryWithRelevace(&$query, $relevance_count)
+    protected function filterQueryWithRelevance(&$query, $relevance_count)
     {
-        $query->havingRaw('relevance > ' . $relevance_count);
+        $query->where('relevance', '>', intval($relevance_count));
         $query->orderBy('relevance', 'desc');
     }
 
@@ -158,6 +170,6 @@ trait SearchableTrait
 
         $fields = implode(' || ', $fields);
 
-        return 'if(' . $fields . ', ' . $relevance * $relevance_multiplier . ', 0)';
+        return 'case when ' . $fields . ' then ' . $relevance * $relevance_multiplier . ' else 0 end';
     }
 }
