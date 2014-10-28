@@ -158,6 +158,6 @@ trait SearchableTrait
 
         $fields = implode(' || ', $fields);
 
-        return 'if(' . $fields . ', ' . $relevance * $relevance_multiplier . ', 0)';
+        return '(case when ' . $fields . ' then ' . $relevance * $relevance_multiplier . ' else 0 end)';
     }
 }
