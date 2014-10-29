@@ -99,12 +99,10 @@ Here is an example query
 ```php
 use Nicolaslopezj\Searchable\SearchableTrait;
 
-class Post extends \Eloquent {
-
+class User extends \Eloquent
+{
     use SearchableTrait;
 
-    protected $fillable = ['title', 'resume', 'body', 'tags'];
-    
     /**
      * Searchable rules.
      *
@@ -112,12 +110,10 @@ class Post extends \Eloquent {
      */
     protected $searchable = [
         'columns' => [
-            'title' => 20,
-            'resume' => 5,
-            'body' => 2,
-        ],
-        'joins' => [
-            
+            'first_name' => 10,
+            'last_name' => 10,
+            'bio' => 2,
+            'email' => 5,
         ],
     ];
 
@@ -126,46 +122,52 @@ class Post extends \Eloquent {
 
 ####Search:
 ```php
-$search = Post::search('Sed neque labore')->get();
+$search = User::search('Sed neque labore')->get();
 ```
 
 ####Result:
 ```sql
-SELECT *,
+select `users`.*, 
+
 -- For each column you specify makes 3 "ifs" containing 
 -- each word of the search input and adds relevace to 
 -- the row
 
 -- The first checks if the column is equal to the word,
 -- if then it adds relevance * 15
-if(title = 'Sed' || title = 'neque' || title = 'labore', 300, 0) +
+(case when first_name LIKE 'Sed' || first_name LIKE 'neque' || first_name LIKE 'labore' then 150 else 0 end) + 
 
 -- The second checks if the column starts with the word,
 -- if then it adds relevance * 5
-if(title LIKE 'Sed%' || title LIKE 'neque%' || title LIKE 'labore%', 100, 0) + 
+(case when first_name LIKE 'Sed%' || first_name LIKE 'neque%' || first_name LIKE 'labore%' then 50 else 0 end) + 
 
 -- The third checks if the column contains the word, 
 -- if then it adds relevance * 1
-if(title LIKE '%Sed%' || title LIKE '%neque%' || title LIKE '%labore%', 20, 0) + 
+(case when first_name LIKE '%Sed%' || first_name LIKE '%neque%' || first_name LIKE '%labore%' then 10 else 0 end) + 
 
 -- Repeats with each column
-if(resume = 'Sed' || resume = 'neque' || resume = 'labore', 75, 0) + 
-if(resume LIKE 'Sed%' || resume LIKE 'neque%' || resume LIKE 'labore%', 25, 0) + 
-if(resume LIKE '%Sed%' || resume LIKE '%neque%' || resume LIKE '%labore%', 5, 0) + 
+(case when last_name LIKE 'Sed' || last_name LIKE 'neque' || last_name LIKE 'labore' then 150 else 0 end) + 
+(case when last_name LIKE 'Sed%' || last_name LIKE 'neque%' || last_name LIKE 'labore%' then 50 else 0 end) +
+(case when last_name LIKE '%Sed%' || last_name LIKE '%neque%' || last_name LIKE '%labore%' then 10 else 0 end) + 
 
-if(body = 'Sed' || body = 'neque' || body = 'labore', 30, 0) + 
-if(body LIKE 'Sed%' || body LIKE 'neque%' || body LIKE 'labore%', 10, 0) + 
-if(body LIKE '%Sed%' || body LIKE '%neque%' || body LIKE '%labore%', 2, 0)
+(case when bio LIKE 'Sed' || bio LIKE 'neque' || bio LIKE 'labore' then 30 else 0 end) + 
+(case when bio LIKE 'Sed%' || bio LIKE 'neque%' || bio LIKE 'labore%' then 10 else 0 end) + 
+(case when bio LIKE '%Sed%' || bio LIKE '%neque%' || bio LIKE '%labore%' then 2 else 0 end) + 
 
-AS relevance
-FROM `posts`
+(case when email LIKE 'Sed' || email LIKE 'neque' || email LIKE 'labore' then 75 else 0 end) + 
+(case when email LIKE 'Sed%' || email LIKE 'neque%' || email LIKE 'labore%' then 25 else 0 end) + 
+(case when email LIKE '%Sed%' || email LIKE '%neque%' || email LIKE '%labore%' then 5 else 0 end) 
+
+as relevance 
+from `users` 
+group by `id` 
 
 -- Selects only the rows that have more than
 -- the sum of all attributes relevances and divided by 4
 -- Ej: (20 + 5 + 2) / 4 = 6.75
-HAVING relevance > 6.75
+having relevance > 6.75 
 
 -- Orders the results by relevance
-ORDER BY `relevance` DESC
+order by `relevance` desc
 ```
 
