@@ -1,6 +1,7 @@
 <?php namespace Nicolaslopezj\Searchable;
 
 use Illuminate\Database\Query\Expression;
+use Config;
 
 /**
  * Trait SearchableTrait
@@ -8,6 +9,9 @@ use Illuminate\Database\Query\Expression;
  */
 trait SearchableTrait
 {
+
+    protected $search_bindings;
+
     /**
      * Makes the search process
      *
@@ -27,14 +31,13 @@ trait SearchableTrait
 
         $words = explode(' ', $search);
         $selects = [];
+        $this->search_bindings = [];
         $relevance_count = 0;
 
         foreach ($this->getColumns() as $column => $relevance)
         {
             $relevance_count += $relevance;
-
-            $queries = $this->getSearchQueriesForColumn($column, $relevance, $words);
-
+            $queries = $this->getSearchQueriesForColumn($query, $column, $relevance, $words);
             foreach ($queries as $select)
             {
                 $selects[] = $select;
@@ -42,11 +45,23 @@ trait SearchableTrait
         }
 
         $this->addSelectsToQuery($query, $selects);
-        $this->filterQueryWithRelevace($query, ($relevance_count / 4));
+        $this->filterQueryWithRelevace($query, $selects, ($relevance_count / 4));
 
         $this->makeGroupBy($query);
 
+        $this->addBindingsToQuery($query, $this->search_bindings);
+
         return $query;
+    }
+
+    /**
+     * Returns database driver Ej: mysql, pgsql
+     *
+     * @return array
+     */
+    protected function getDatabaseDriver() {
+        $key = Config::get('database.default');
+        return Config::get('database.connections.' . $key . '.driver');
     }
 
     /**
@@ -110,27 +125,33 @@ trait SearchableTrait
      * @param $query
      * @param $relevance_count
      */
-    protected function filterQueryWithRelevace(&$query, $relevance_count)
+    protected function filterQueryWithRelevace(&$query, $selects, $relevance_count)
     {
-        $query->havingRaw('relevance > ' . $relevance_count);
+        $comparator = $this->getDatabaseDriver() == 'pgsql' ? implode(' + ', $selects) : 'relevance';
+        $query->havingRaw($comparator . ' > ' . $relevance_count);
         $query->orderBy('relevance', 'desc');
+
+        // add bindings to postgres
     }
 
     /**
      * Returns the search queries for the specified column
      *
+     * @param $query
      * @param $column
      * @param $relevance
      * @param $words
      * @return array
      */
-    protected function getSearchQueriesForColumn($column, $relevance, $words)
+    protected function getSearchQueriesForColumn(&$query, $column, $relevance, $words)
     {
+        $like_comparator = $this->getDatabaseDriver() == 'pgsql' ? 'ILIKE' : 'LIKE';
+
         $queries = [];
 
-        $queries[] = $this->getSearchQuery($column, $relevance, $words, '=', 15);
-        $queries[] = $this->getSearchQuery($column, $relevance, $words, 'LIKE', 5, '', '%');
-        $queries[] = $this->getSearchQuery($column, $relevance, $words, 'LIKE', 1, '%', '%');
+        $queries[] = $this->getSearchQuery($query, $column, $relevance, $words, $like_comparator, 15);
+        $queries[] = $this->getSearchQuery($query, $column, $relevance, $words, $like_comparator, 5, '', '%');
+        $queries[] = $this->getSearchQuery($query, $column, $relevance, $words, $like_comparator, 1, '%', '%');
 
         return $queries;
     }
@@ -138,6 +159,7 @@ trait SearchableTrait
     /**
      * Returns the sql string for the parameters
      *
+     * @param $query
      * @param $column
      * @param $relevance
      * @param $words
@@ -147,17 +169,29 @@ trait SearchableTrait
      * @param string $post_word
      * @return string
      */
-    protected function getSearchQuery($column, $relevance, $words, $compare, $relevance_multiplier, $pre_word = '', $post_word = '')
+    protected function getSearchQuery(&$query, $column, $relevance, $words, $compare, $relevance_multiplier, $pre_word = '', $post_word = '')
     {
         $fields = [];
 
+        $cases = [];
         foreach ($words as $word)
         {
-            $fields[] = $column . " " . $compare . " '" . $pre_word . $word . $post_word . "'";
+            $field = $column . " " . $compare . " ?";
+            $cases[] = '(case when ' . $field . ' then ' . $relevance * $relevance_multiplier . ' else 0 end)';
+            $this->search_bindings[] = $pre_word . $word . $post_word;
         }
 
-        $fields = implode(' || ', $fields);
-
-        return 'if(' . $fields . ', ' . $relevance * $relevance_multiplier . ', 0)';
+        return implode(' + ', $cases);
     }
+
+    protected function addBindingsToQuery(&$query, $bindings) {
+        $count = $this->getDatabaseDriver() == 'pgsql' ? 2 : 1;
+        for ($i = 0; $i < $count; $i++) {
+            foreach($bindings as $binding) {
+                $type = $i == 0 ? 'select' : 'having';
+                $query->addBinding($binding, $type);
+            }
+        }
+    }
+
 }
