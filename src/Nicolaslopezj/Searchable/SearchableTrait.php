@@ -1,6 +1,7 @@
 <?php namespace Nicolaslopezj\Searchable;
 
 use Illuminate\Database\Query\Expression;
+use Config;
 
 /**
  * Trait SearchableTrait
@@ -42,11 +43,21 @@ trait SearchableTrait
         }
 
         $this->addSelectsToQuery($query, $selects);
-        $this->filterQueryWithRelevace($query, ($relevance_count / 4));
+        $this->filterQueryWithRelevace($query, $selects, ($relevance_count / 4));
 
         $this->makeGroupBy($query);
 
         return $query;
+    }
+
+    /**
+     * Returns database driver Ej: mysql, pgsql
+     *
+     * @return array
+     */
+    protected function getDatabaseDriver() {
+        $key = Config::get('database.default');
+        return Config::get('database.connections.' . $key . '.driver');
     }
 
     /**
@@ -110,9 +121,10 @@ trait SearchableTrait
      * @param $query
      * @param $relevance_count
      */
-    protected function filterQueryWithRelevace(&$query, $relevance_count)
+    protected function filterQueryWithRelevace(&$query, $selects, $relevance_count)
     {
-        $query->havingRaw('relevance > ' . $relevance_count);
+        $comparator = $this->getDatabaseDriver() == 'pgsql' ? implode(' + ', $selects) : 'relevance';
+        $query->havingRaw($comparator . ' > ' . $relevance_count);
         $query->orderBy('relevance', 'desc');
     }
 
@@ -126,11 +138,13 @@ trait SearchableTrait
      */
     protected function getSearchQueriesForColumn($column, $relevance, $words)
     {
+        $like_comparator = $this->getDatabaseDriver() == 'pgsql' ? 'ILIKE' : 'LIKE';
+
         $queries = [];
 
-        $queries[] = $this->getSearchQuery($column, $relevance, $words, '=', 15);
-        $queries[] = $this->getSearchQuery($column, $relevance, $words, 'LIKE', 5, '', '%');
-        $queries[] = $this->getSearchQuery($column, $relevance, $words, 'LIKE', 1, '%', '%');
+        $queries[] = $this->getSearchQuery($column, $relevance, $words, $like_comparator, 15);
+        $queries[] = $this->getSearchQuery($column, $relevance, $words, $like_comparator, 5, '', '%');
+        $queries[] = $this->getSearchQuery($column, $relevance, $words, $like_comparator, 1, '%', '%');
 
         return $queries;
     }
@@ -158,6 +172,6 @@ trait SearchableTrait
 
         $fields = implode(' || ', $fields);
 
-        return 'if(' . $fields . ', ' . $relevance * $relevance_multiplier . ', 0)';
+        return '(case when ' . $fields . ' then ' . $relevance * $relevance_multiplier . ' else 0 end)';
     }
 }
