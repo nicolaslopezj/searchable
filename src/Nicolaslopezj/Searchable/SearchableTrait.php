@@ -105,23 +105,7 @@ trait SearchableTrait
     protected function makeGroupBy(&$query)
     {
         $driver = $this->getDatabaseDriver();
-
-        if ($driver == 'mysql') {
-            $query->groupBy($this->primaryKey);
-        }
-        
-        if ($driver == 'pgsql') {
-            $query->groupBy($this->primaryKey);
-        }
-
-        if ($driver == 'sqlsrv') {
-            $columns_to_group = [$this->primaryKey];
-            foreach ($this->getColumns() as $column => $relevance)
-            {
-                $columns_to_group[] = $column;
-            }
-            $query->groupBy($columns_to_group);
-        }
+        $query->groupBy($this->primaryKey);
     }
 
     /**
@@ -209,22 +193,8 @@ trait SearchableTrait
      * @return string
      */
     protected function getCaseCompare($column, $compare, $relevance) {
-        $driver = $this->getDatabaseDriver();
-
-        if ($driver == 'mysql') {
-            $field = $column . " " . $compare . " ?";
-            return 'if(' . $field . ', ' . $relevance . ', 0)';
-        }
-        
-        if ($driver == 'pgsql') {
-            $field = $column . " " . $compare . " ?";
-            return '(case when ' . $field . ' then ' . $relevance . ' else 0 end)';
-        }
-
-        if ($driver == 'sqlsrv') {
-            $field = $column . " " . $compare . " '?'";
-            return '(case when ' . $field . ' then ' . $relevance . ' else 0 end)';
-        }
+        $field = $column . " " . $compare . " ?";
+        return '(case when ' . $field . ' then ' . $relevance . ' else 0 end)';
     }
 
     /**
