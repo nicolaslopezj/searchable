@@ -176,8 +176,7 @@ trait SearchableTrait
 
         foreach ($words as $word)
         {
-            $field = $column . " " . $compare . " ?";
-            $cases[] = $this->getCaseCompare($field, $relevance * $relevance_multiplier);
+            $cases[] = $this->getCaseCompare($column, $compare, $relevance * $relevance_multiplier);
             $this->search_bindings[] = $pre_word . $word . $post_word;
         }
 
@@ -187,12 +186,28 @@ trait SearchableTrait
     /**
      * Returns the comparision string
      *
-     * @param $field
+     * @param $column
+     * @param $compare
      * @param $relevance
      * @return string
      */
-    protected function getCaseCompare($field, $relevance) {
-        return '(case when ' . $field . ' then ' . $relevance . ' else 0 end)';
+    protected function getCaseCompare($column, $compare, $relevance) {
+        $driver = $this->getDatabaseDriver();
+
+        if ($driver == 'mysql') {
+            $field = $column . " " . $compare . " ?";
+            return 'if(' . $field . ', ' . $relevance . ', 0)';
+        }
+        
+        if ($driver == 'pgsql') {
+            $field = $column . " " . $compare . " ?";
+            return '(case when ' . $field . ' then ' . $relevance . ' else 0 end)';
+        }
+
+        if ($driver == 'sqlsrv') {
+            $field = $column . " " . $compare . " '?'";
+            return '(if ' . $field . ' then ' . $relevance . ' else 0 end if)';
+        }
     }
 
     /**
