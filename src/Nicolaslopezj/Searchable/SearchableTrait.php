@@ -75,6 +75,16 @@ trait SearchableTrait
     }
 
     /**
+     * Returns the table columns
+     *
+     * @return array
+     */
+    protected function getTableColumns()
+    {
+        return $this->searchable['table_columns'];
+    }
+
+    /**
      * Returns the tables that has to join
      *
      * @return array
@@ -105,7 +115,14 @@ trait SearchableTrait
     protected function makeGroupBy(&$query)
     {
         $driver = $this->getDatabaseDriver();
-        $query->groupBy($this->primaryKey);
+
+        if ($driver == 'sqlsrv') {
+            $columns = $this->getTableColumns();
+        } else {
+            $columns = $this->primaryKey;
+        }
+
+        $query->groupBy($columns);
     }
 
     /**
