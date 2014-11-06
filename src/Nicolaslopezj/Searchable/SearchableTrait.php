@@ -71,7 +71,11 @@ trait SearchableTrait
      */
     protected function getColumns()
     {
-        return $this->searchable['columns'];
+        if (array_key_exists('columns', $this->searchable)) {
+            return $this->searchable['columns'];
+        } else {
+            return \DB::connection()->getSchemaBuilder()->getColumnListing($this->table);
+        }
     }
 
     /**
