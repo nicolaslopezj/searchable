@@ -171,3 +171,8 @@ having relevance > 6.75
 order by `relevance` desc
 ```
 
+## Contributing
+
+Anyone is welcome to contribute. Fork, make your changes, and then submit a pull request.
+
+[![Support via Gittip](https://rawgithub.com/twolfson/gittip-badge/0.2.0/dist/gittip.png)](https://gratipay.com/nicolaslopezj/)
