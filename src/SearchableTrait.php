@@ -17,9 +17,10 @@ trait SearchableTrait
      *
      * @param $query
      * @param $search
+     * @param $threshold
      * @return mixed
      */
-    public function scopeSearch($query, $search)
+    public function scopeSearch($query, $search, $threshold = null)
     {
         $query->select($this->getTable() . '.*');
         $this->makeJoins($query);
@@ -45,7 +46,7 @@ trait SearchableTrait
         }
 
         $this->addSelectsToQuery($query, $selects);
-        $this->filterQueryWithRelevace($query, $selects, ($relevance_count / 4));
+        $this->filterQueryWithRelevace($query, $selects, $threshold ?: ($relevance_count / 4));
 
         $this->makeGroupBy($query);
 
