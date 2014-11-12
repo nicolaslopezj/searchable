@@ -89,6 +89,19 @@ $users = User::where('status', 'active')
             ->paginate(20);
 ```
 
+## Custom Threshold
+
+The default threshold for accepted relevance is the sum of all attribute relevance divided by 4.
+To change this value you can pass in a second parameter to search() like so:
+
+```php
+// Search with lower relevance threshold
+$users = User::where('status', 'active')
+            ->search($query, 0)
+            ->paginate(20);
+```
+
+The above, will return all users in order of relevance.
 
 # How does it works?
 
