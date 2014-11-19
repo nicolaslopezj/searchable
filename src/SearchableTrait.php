@@ -72,7 +72,21 @@ trait SearchableTrait
      */
     protected function getColumns()
     {
-        return $this->searchable['columns'];
+        if (array_key_exists('columns', $this->searchable)) {
+            return $this->searchable['columns'];
+        } else {
+            return \DB::connection()->getSchemaBuilder()->getColumnListing($this->table);
+        }
+    }
+
+    /**
+     * Returns the table columns
+     *
+     * @return array
+     */
+    protected function getTableColumns()
+    {
+        return $this->searchable['table_columns'];
     }
 
     /**
@@ -105,7 +119,15 @@ trait SearchableTrait
      */
     protected function makeGroupBy(&$query)
     {
-        $query->groupBy($this->primaryKey);
+        $driver = $this->getDatabaseDriver();
+
+        if ($driver == 'sqlsrv') {
+            $columns = $this->getTableColumns();
+        } else {
+            $columns = $this->primaryKey;
+        }
+
+        $query->groupBy($columns);
     }
 
     /**
@@ -124,11 +146,12 @@ trait SearchableTrait
      * Adds relevance filter to the query
      *
      * @param $query
+     * @param $selects
      * @param $relevance_count
      */
     protected function filterQueryWithRelevace(&$query, $selects, $relevance_count)
     {
-        $comparator = $this->getDatabaseDriver() == 'pgsql' ? implode(' + ', $selects) : 'relevance';
+        $comparator = $this->getDatabaseDriver() != 'mysql' ? implode(' + ', $selects) : 'relevance';
         $query->havingRaw($comparator . ' > ' . $relevance_count);
         $query->orderBy('relevance', 'desc');
 
@@ -172,21 +195,38 @@ trait SearchableTrait
      */
     protected function getSearchQuery(&$query, $column, $relevance, $words, $compare, $relevance_multiplier, $pre_word = '', $post_word = '')
     {
-        $fields = [];
-
         $cases = [];
+
         foreach ($words as $word)
         {
-            $field = $column . " " . $compare . " ?";
-            $cases[] = '(case when ' . $field . ' then ' . $relevance * $relevance_multiplier . ' else 0 end)';
+            $cases[] = $this->getCaseCompare($column, $compare, $relevance * $relevance_multiplier);
             $this->search_bindings[] = $pre_word . $word . $post_word;
         }
 
         return implode(' + ', $cases);
     }
 
+    /**
+     * Returns the comparision string
+     *
+     * @param $column
+     * @param $compare
+     * @param $relevance
+     * @return string
+     */
+    protected function getCaseCompare($column, $compare, $relevance) {
+        $field = $column . " " . $compare . " ?";
+        return '(case when ' . $field . ' then ' . $relevance . ' else 0 end)';
+    }
+
+    /**
+     * Adds the bindings to the query
+     *
+     * @param $query
+     * @param $bindings
+     */
     protected function addBindingsToQuery(&$query, $bindings) {
-        $count = $this->getDatabaseDriver() == 'pgsql' ? 2 : 1;
+        $count = $this->getDatabaseDriver() != 'mysql' ? 2 : 1;
         for ($i = 0; $i < $count; $i++) {
             foreach($bindings as $binding) {
                 $type = $i == 0 ? 'select' : 'having';
