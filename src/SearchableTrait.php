@@ -84,7 +84,7 @@ trait SearchableTrait
      *
      * @return array
      */
-    protected function getTableColumns()
+    public function getTableColumns()
     {
         return $this->searchable['table_columns'];
     }
