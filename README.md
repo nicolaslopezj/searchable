@@ -103,7 +103,7 @@ $users = User::where('status', 'active')
 
 The above, will return all users in order of relevance.
 
-# How does it works?
+# How does it work?
 
 Searchable builds a query that search through your model using Laravel's Eloquent.
 Here is an example query
