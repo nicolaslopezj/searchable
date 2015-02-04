@@ -120,14 +120,25 @@ trait SearchableTrait
     protected function makeGroupBy(&$query)
     {
         $driver = $this->getDatabaseDriver();
-
         if ($driver == 'sqlsrv') {
             $columns = $this->getTableColumns();
         } else {
-            $columns = $this->primaryKey;
-        }
+            $id = $this->getTable() . '.' .$this->primaryKey;
+            $joins = array_keys(($this->getJoins()));
 
-        $query->groupBy($columns);
+            foreach ($this->getColumns() as $column => $relevance) {
+
+                array_map(function($join) use ($column, $query){
+
+                    if(Str::contains($column, $join)){
+                        $query->groupBy("$column");
+                    }
+
+                }, $joins);
+
+            }
+        }
+        $query->groupBy($id);
     }
 
     /**
