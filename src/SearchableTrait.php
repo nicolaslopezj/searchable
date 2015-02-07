@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Query\Expression;
 use Config;
+use Str;
 
 /**
  * Trait SearchableTrait
