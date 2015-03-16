@@ -47,7 +47,7 @@ trait SearchableTrait
         }
 
         $this->addSelectsToQuery($query, $selects);
-        $this->filterQueryWithRelevace($query, $selects, $threshold ?: ($relevance_count / 4));
+        $this->filterQueryWithRelevance($query, $selects, $threshold ?: ($relevance_count / 4));
 
         $this->makeGroupBy($query);
 
@@ -161,7 +161,7 @@ trait SearchableTrait
      * @param $selects
      * @param $relevance_count
      */
-    protected function filterQueryWithRelevace(&$query, $selects, $relevance_count)
+    protected function filterQueryWithRelevance(&$query, $selects, $relevance_count)
     {
         $comparator = $this->getDatabaseDriver() != 'mysql' ? implode(' + ', $selects) : 'relevance';
         $query->havingRaw($comparator . ' > ' . $relevance_count);
