@@ -164,7 +164,7 @@ trait SearchableTrait
     protected function filterQueryWithRelevace(&$query, $selects, $relevance_count)
     {
         $comparator = $this->getDatabaseDriver() != 'mysql' ? implode(' + ', $selects) : 'relevance';
-        $query->havingRaw($comparator . ' > ' . $relevance_count);
+        $query->having($comparator, '>', $relevance_count);
         $query->orderBy('relevance', 'desc');
 
         // add bindings to postgres
