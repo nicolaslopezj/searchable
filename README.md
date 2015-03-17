@@ -7,6 +7,8 @@ Searchable allows you to perform searches in a table giving priorities to each f
 
 This is not optimized for big searches, but sometimes you just need to make it simple (Although it is not slow).
 
+> *Count and paginate are not working properlly on Laravel 5.0*
+
 # Installation
 
 Simply add the package to your `composer.json` file and run `composer update`.
@@ -103,7 +105,7 @@ $users = User::where('status', 'active')
 
 The above, will return all users in order of relevance.
 
-# How does it works?
+# How does it work?
 
 Searchable builds a query that search through your model using Laravel's Eloquent.
 Here is an example query

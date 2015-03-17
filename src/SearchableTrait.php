@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Query\Expression;
 use Config;
+use Illuminate\Support\Str;
 
 /**
  * Trait SearchableTrait
@@ -46,7 +47,7 @@ trait SearchableTrait
         }
 
         $this->addSelectsToQuery($query, $selects);
-        $this->filterQueryWithRelevace($query, $selects, $threshold ?: ($relevance_count / 4));
+        $this->filterQueryWithRelevance($query, $selects, $threshold ?: ($relevance_count / 4));
 
         $this->makeGroupBy($query);
 
@@ -84,7 +85,7 @@ trait SearchableTrait
      *
      * @return array
      */
-    protected function getTableColumns()
+    public function getTableColumns()
     {
         return $this->searchable['table_columns'];
     }
@@ -120,14 +121,25 @@ trait SearchableTrait
     protected function makeGroupBy(&$query)
     {
         $driver = $this->getDatabaseDriver();
-
         if ($driver == 'sqlsrv') {
             $columns = $this->getTableColumns();
         } else {
-            $columns = $this->primaryKey;
-        }
+            $id = $this->getTable() . '.' .$this->primaryKey;
+            $joins = array_keys(($this->getJoins()));
 
-        $query->groupBy($columns);
+            foreach ($this->getColumns() as $column => $relevance) {
+
+                array_map(function($join) use ($column, $query){
+
+                    if(Str::contains($column, $join)){
+                        $query->groupBy("$column");
+                    }
+
+                }, $joins);
+
+            }
+        }
+        $query->groupBy($id);
     }
 
     /**
@@ -149,7 +161,7 @@ trait SearchableTrait
      * @param $selects
      * @param $relevance_count
      */
-    protected function filterQueryWithRelevace(&$query, $selects, $relevance_count)
+    protected function filterQueryWithRelevance(&$query, $selects, $relevance_count)
     {
         $comparator = $this->getDatabaseDriver() != 'mysql' ? implode(' + ', $selects) : 'relevance';
         $query->havingRaw($comparator . ' > ' . $relevance_count);
