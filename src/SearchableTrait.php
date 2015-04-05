@@ -25,14 +25,15 @@ trait SearchableTrait
      * @param float|null $threshold
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeSearch(Builder $query, $search, $threshold = null)
+    public function scopeSearch(Builder $q, $search, $threshold = null)
     {
+        $query = clone $q;
         $query->select($this->getTable() . '.*');
         $this->makeJoins($query);
 
         if ( ! $search)
         {
-            return $query;
+            return $q;
         }
 
         $words = explode(' ', $search);
@@ -57,7 +58,9 @@ trait SearchableTrait
 
         $this->addBindingsToQuery($query, $this->search_bindings);
 
-        return $query;
+        $this->mergeQueries($query, $q);
+
+        return $q;
     }
 
     /**
@@ -168,7 +171,7 @@ trait SearchableTrait
     protected function filterQueryWithRelevance(Builder $query, array $selects, $relevance_count)
     {
         $comparator = $this->getDatabaseDriver() != 'mysql' ? implode(' + ', $selects) : 'relevance';
-        $query->having($comparator, '>', $relevance_count);
+        $query->havingRaw("$comparator > $relevance_count");
         $query->orderBy('relevance', 'desc');
 
         // add bindings to postgres
@@ -249,5 +252,16 @@ trait SearchableTrait
                 $query->addBinding($binding, $type);
             }
         }
+    }
+
+    /**
+     * Merge our cloned query builder with the original one.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $clone
+     * @param \Illuminate\Database\Eloquent\Builder $original
+     */
+    protected function mergeQueries(Builder $clone, Builder $original) {
+        $original->from(DB::raw("({$clone->toSql()}) as `{$this->getTable()}`"));
+        $original->mergeBindings($clone->getQuery());
     }
 }
