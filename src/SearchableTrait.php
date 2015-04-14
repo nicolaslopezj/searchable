@@ -33,7 +33,7 @@ trait SearchableTrait
 
         if ( ! $search)
         {
-            return $q;
+            return $query;
         }
 
         $words = explode(' ', $search);
@@ -60,7 +60,7 @@ trait SearchableTrait
 
         $this->mergeQueries($query, $q);
 
-        return $q;
+        return $query;
     }
 
     /**
