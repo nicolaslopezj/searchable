@@ -20,7 +20,7 @@ trait SearchableTrait
     /**
      * Creates the search scope.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param \Illuminate\Database\Eloquent\Builder $q
      * @param string $search
      * @param float|null $threshold
      * @return \Illuminate\Database\Eloquent\Builder
