@@ -52,7 +52,7 @@ trait SearchableTrait
         }
 
         $this->addSelectsToQuery($query, $selects);
-        $this->filterQueryWithRelevance($query, $selects, $threshold ?: ($relevance_count / 4));
+        $this->filterQueryWithRelevance($query, $selects, !is_null($threshold)? $threshold: ($relevance_count / 4));
 
         $this->makeGroupBy($query);
 
