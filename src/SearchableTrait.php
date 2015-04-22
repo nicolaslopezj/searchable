@@ -20,7 +20,7 @@ trait SearchableTrait
     /**
      * Creates the search scope.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $q
+     * @param \Illuminate\Database\Eloquent\Builder $query
      * @param string $search
      * @param float|null $threshold
      * @return \Illuminate\Database\Eloquent\Builder
@@ -33,7 +33,7 @@ trait SearchableTrait
 
         if ( ! $search)
         {
-            return $query;
+            return $q;
         }
 
         $words = explode(' ', $search);
@@ -52,7 +52,7 @@ trait SearchableTrait
         }
 
         $this->addSelectsToQuery($query, $selects);
-        $this->filterQueryWithRelevance($query, $selects, !is_null($threshold)? $threshold: ($relevance_count / 4));
+        $this->filterQueryWithRelevance($query, $selects, $threshold ?: ($relevance_count / 4));
 
         $this->makeGroupBy($query);
 
@@ -60,7 +60,7 @@ trait SearchableTrait
 
         $this->mergeQueries($query, $q);
 
-        return $query;
+        return $q;
     }
 
     /**
