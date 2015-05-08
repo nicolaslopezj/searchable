@@ -35,7 +35,8 @@ trait SearchableTrait
         {
             return $q;
         }
-
+        
+        $search = strtolower($search);
         $words = explode(' ', $search);
         $selects = [];
         $this->search_bindings = [];
@@ -234,7 +235,7 @@ trait SearchableTrait
      * @return string
      */
     protected function getCaseCompare($column, $compare, $relevance) {
-        $field = $column . " " . $compare . " ?";
+        $field = "LOWER(" . $column . ") " . $compare . " ?";
         return '(case when ' . $field . ' then ' . $relevance . ' else 0 end)';
     }
 
