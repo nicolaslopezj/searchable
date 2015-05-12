@@ -135,12 +135,17 @@ class User extends \Eloquent
 
 ####Search:
 ```php
-$search = User::search('Sed neque labore')->get();
+$search = User::search('Sed neque labore', null, true)->get();
 ```
 
 ####Result:
 ```sql
 select `users`.*, 
+
+-- If third parameter is set as true, it will check if the column starts with the search
+-- if then it adds relevance * 30
+-- this ensures that relevant results will be at top
+(case when first_name LIKE 'Sed neque labore%' then 300 else 0 end) + 
 
 -- For each column you specify makes 3 "ifs" containing 
 -- each word of the search input and adds relevace to 
