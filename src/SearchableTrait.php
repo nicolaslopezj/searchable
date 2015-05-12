@@ -36,14 +36,9 @@ trait SearchableTrait
             return $q;
         }
 
-        $search = strtolower($search);
+        $search = strtolower(trim($search));
         $words = explode(' ', $search);
-        if ( $entireText === true )
-        {
-            array_unshift($words, $search);
-        }
 
-        
         $selects = [];
         $this->search_bindings = [];
         $relevance_count = 0;
@@ -52,6 +47,12 @@ trait SearchableTrait
         {
             $relevance_count += $relevance;
             $queries = $this->getSearchQueriesForColumn($query, $column, $relevance, $words);
+
+            if ( $entireText === true )
+            {
+                $queries[] = $this->getSearchQuery($query, $column, $relevance, [$search], 30, '', '%');
+            }
+
             foreach ($queries as $select)
             {
                 $selects[] = $select;
@@ -195,13 +196,11 @@ trait SearchableTrait
      */
     protected function getSearchQueriesForColumn(Builder $query, $column, $relevance, array $words)
     {
-        $like_comparator = $this->getDatabaseDriver() == 'pgsql' ? 'ILIKE' : 'LIKE';
-
         $queries = [];
 
-        $queries[] = $this->getSearchQuery($query, $column, $relevance, $words, $like_comparator, 15);
-        $queries[] = $this->getSearchQuery($query, $column, $relevance, $words, $like_comparator, 5, '', '%');
-        $queries[] = $this->getSearchQuery($query, $column, $relevance, $words, $like_comparator, 1, '%', '%');
+        $queries[] = $this->getSearchQuery($query, $column, $relevance, $words, 15);
+        $queries[] = $this->getSearchQuery($query, $column, $relevance, $words, 5, '', '%');
+        $queries[] = $this->getSearchQuery($query, $column, $relevance, $words, 1, '%', '%');
 
         return $queries;
     }
@@ -219,13 +218,14 @@ trait SearchableTrait
      * @param string $post_word
      * @return string
      */
-    protected function getSearchQuery(Builder $query, $column, $relevance, array $words, $compare, $relevance_multiplier, $pre_word = '', $post_word = '')
+    protected function getSearchQuery(Builder $query, $column, $relevance, array $words, $relevance_multiplier, $pre_word = '', $post_word = '')
     {
+        $like_comparator = $this->getDatabaseDriver() == 'pgsql' ? 'ILIKE' : 'LIKE';
         $cases = [];
 
         foreach ($words as $word)
         {
-            $cases[] = $this->getCaseCompare($column, $compare, $relevance * $relevance_multiplier);
+            $cases[] = $this->getCaseCompare($column, $like_comparator, $relevance * $relevance_multiplier);
             $this->search_bindings[] = $pre_word . $word . $post_word;
         }
 
