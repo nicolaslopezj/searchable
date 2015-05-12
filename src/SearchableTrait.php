@@ -25,7 +25,7 @@ trait SearchableTrait
      * @param float|null $threshold
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeSearch(Builder $q, $search, $threshold = null)
+    public function scopeSearch(Builder $q, $search, $threshold = null, $entireText = false)
     {
         $query = clone $q;
         $query->select($this->getTable() . '.*');
@@ -38,6 +38,12 @@ trait SearchableTrait
 
         $search = strtolower($search);
         $words = explode(' ', $search);
+        if ( $entireText === true )
+        {
+            array_unshift($words, $search);
+        }
+
+        
         $selects = [];
         $this->search_bindings = [];
         $relevance_count = 0;
