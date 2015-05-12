@@ -33,7 +33,7 @@ trait SearchableTrait
 
         if ( ! $search)
         {
-            return $query;
+            return $q;
         }
 
         $search = strtolower($search);
@@ -61,7 +61,7 @@ trait SearchableTrait
 
         $this->mergeQueries($query, $q);
 
-        return $query;
+        return $q;
     }
 
     /**
