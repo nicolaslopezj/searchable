@@ -36,7 +36,7 @@ trait SearchableTrait
             return $q;
         }
 
-        $search = strtolower(trim($search));
+        $search = mb_strtolower(trim($search));
         $words = explode(' ', $search);
 
         $selects = [];
