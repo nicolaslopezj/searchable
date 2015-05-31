@@ -241,7 +241,7 @@ trait SearchableTrait
      * @return string
      */
     protected function getCaseCompare($column, $compare, $relevance) {
-        $field = "LOWER(" . $column . ") " . $compare . " ?";
+        $field = "LOWER(`" . $column . "`) " . $compare . " ?";
         return '(case when ' . $field . ' then ' . $relevance . ' else 0 end)';
     }
 
