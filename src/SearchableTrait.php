@@ -179,6 +179,9 @@ trait SearchableTrait
     protected function filterQueryWithRelevance(Builder $query, array $selects, $relevance_count)
     {
         $comparator = $this->getDatabaseDriver() != 'mysql' ? implode(' + ', $selects) : 'relevance';
+
+        $relevance_count=number_format($relevance_count,2,'.','');
+
         $query->havingRaw("$comparator > $relevance_count");
         $query->orderBy('relevance', 'desc');
 
