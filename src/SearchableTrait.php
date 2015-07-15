@@ -27,6 +27,11 @@ trait SearchableTrait
      */
     public function scopeSearch(Builder $q, $search, $threshold = null, $entireText = false)
     {
+        return $this->scopeSearchRestricted($q, $search, null, $threshold, $entireText);
+    }
+
+    public function scopeSearchRestricted(Builder $q, $search, $restriction, $threshold = null, $entireText = false)
+    {
         $query = clone $q;
         $query->select($this->getTable() . '.*');
         $this->makeJoins($query);
@@ -65,6 +70,10 @@ trait SearchableTrait
         $this->makeGroupBy($query);
 
         $this->addBindingsToQuery($query, $this->search_bindings);
+
+        if(is_callable($restriction)) {
+            $query = $restriction($query);
+        }
 
         $this->mergeQueries($query, $q);
 
