@@ -77,8 +77,7 @@ trait SearchableTrait
      * @return array
      */
     protected function getDatabaseDriver() {
-        $key = Config::get('database.default');
-        return Config::get('database.connections.' . $key . '.driver');
+        return Config::get('database.connections.' . $this->connection . '.driver');
     }
 
     /**
