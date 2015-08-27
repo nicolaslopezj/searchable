@@ -60,7 +60,13 @@ trait SearchableTrait
         }
 
         $this->addSelectsToQuery($query, $selects);
-        $this->filterQueryWithRelevance($query, $selects, $threshold ?: ($relevance_count / 4));
+
+        // Default the threshold if no value was passed.
+        if (is_null($threshold)) {
+            $threshold = $relevance_count / 4;
+        }
+
+        $this->filterQueryWithRelevance($query, $selects, $threshold);
 
         $this->makeGroupBy($query);
 
