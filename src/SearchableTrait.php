@@ -137,9 +137,13 @@ trait SearchableTrait
      */
     protected function makeJoins(Builder $query)
     {
-        foreach ($this->getJoins() as $table => $keys)
-        {
-            $query->leftJoin($table, $keys[0], '=', $keys[1]);
+        foreach ($this->getJoins() as $table => $keys) {
+            $query->leftJoin($table, function ($join) use ($keys) {
+                $join->on($keys[0], '=', $keys[1]);
+                if (array_key_exists(2, $keys) && array_key_exists(3, $keys)) {
+                    $join->where($keys[2], '=', $keys[3]);
+                }
+            });
         }
     }
 
