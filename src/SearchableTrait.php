@@ -92,7 +92,7 @@ trait SearchableTrait
      * @return array
      */
     protected function getDatabaseDriver() {
-        $key = Config::get('database.default');
+        $key = $this->connection ?: Config::get('database.default');
         return Config::get('database.connections.' . $key . '.driver');
     }
 
@@ -291,7 +291,7 @@ trait SearchableTrait
      * @param \Illuminate\Database\Eloquent\Builder $original
      */
     protected function mergeQueries(Builder $clone, Builder $original) {
-        $original->from(DB::raw("({$clone->toSql()}) as `{$this->getTable()}`"));
+        $original->from(DB::connection($this->connection)->raw("({$clone->toSql()}) as `{$this->getTable()}`"));
         $original->mergeBindings($clone->getQuery());
     }
 }
