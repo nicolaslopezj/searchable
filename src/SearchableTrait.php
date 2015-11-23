@@ -184,7 +184,7 @@ trait SearchableTrait
      */
     protected function addSelectsToQuery(Builder $query, array $selects)
     {
-        $selects = new Expression(implode(' + ', $selects) . ' as relevance');
+        $selects = new Expression('avg(' . implode(' + ', $selects) . ') as relevance');
         $query->addSelect($selects);
     }
 
