@@ -115,13 +115,13 @@ trait SearchableTrait
      *
      * @return array
      */
-    protected function getAllowDuplicates()
+    protected function getGroupBy()
     {
-        if (array_key_exists('duplicates', $this->searchable)) {
-            return $this->searchable['duplicates'];
+        if (array_key_exists('groupBy', $this->searchable)) {
+            return $this->searchable['groupBy'];
         }
 
-        return true;
+        return false;
     }
 
     /**
@@ -168,17 +168,19 @@ trait SearchableTrait
      */
     protected function makeGroupBy(Builder $query)
     {
-        $driver = $this->getDatabaseDriver();
-
-        if ($driver == 'sqlsrv') {
-            $columns = $this->getTableColumns();
+        if ($groupBy = $this->getGroupBy()) {
+            $query->groupBy($groupBy);
         } else {
-            $columns = $this->getTable() . '.' .$this->primaryKey;
-        }
+            $driver = $this->getDatabaseDriver();
 
-        $query->groupBy($columns);
+            if ($driver == 'sqlsrv') {
+                $columns = $this->getTableColumns();
+            } else {
+                $columns = $this->getTable() . '.' .$this->primaryKey;
+            }
 
-        if ($this->getAllowDuplicates()) {
+            $query->groupBy($columns);
+
             $joins = array_keys(($this->getJoins()));
 
             foreach ($this->getColumns() as $column => $relevance) {
@@ -187,7 +189,6 @@ trait SearchableTrait
                         $query->groupBy($column);
                     }
                 }, $joins);
-
             }
         }
     }
