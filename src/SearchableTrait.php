@@ -111,6 +111,20 @@ trait SearchableTrait
     }
 
     /**
+     * Returns whether or not to keep duplicates.
+     *
+     * @return array
+     */
+    protected function getAllowDuplicates()
+    {
+        if (array_key_exists('duplicates', $this->searchable)) {
+            return $this->searchable['duplicates'];
+        }
+
+        return true;
+    }
+
+    /**
      * Returns the table columns.
      *
      * @return array
@@ -155,25 +169,27 @@ trait SearchableTrait
     protected function makeGroupBy(Builder $query)
     {
         $driver = $this->getDatabaseDriver();
+
         if ($driver == 'sqlsrv') {
             $columns = $this->getTableColumns();
         } else {
-            $id = $this->getTable() . '.' .$this->primaryKey;
+            $columns = $this->getTable() . '.' .$this->primaryKey;
+        }
+
+        $query->groupBy($columns);
+
+        if ($this->getAllowDuplicates()) {
             $joins = array_keys(($this->getJoins()));
 
             foreach ($this->getColumns() as $column => $relevance) {
-
-                array_map(function($join) use ($column, $query){
-
-                    if(Str::contains($column, $join)){
-                        $query->groupBy("$column");
+                array_map(function ($join) use ($column, $query) {
+                    if (Str::contains($column, $join)) {
+                        $query->groupBy($column);
                     }
-
                 }, $joins);
 
             }
         }
-        $query->groupBy($id);
     }
 
     /**
