@@ -23,6 +23,7 @@ trait SearchableTrait
      * @param \Illuminate\Database\Eloquent\Builder $q
      * @param string $search
      * @param float|null $threshold
+     * @param  boolean $entireText
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeSearch(Builder $q, $search, $threshold = null, $entireText = false)
