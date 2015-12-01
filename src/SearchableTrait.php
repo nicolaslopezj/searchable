@@ -111,6 +111,20 @@ trait SearchableTrait
     }
 
     /**
+     * Returns whether or not to keep duplicates.
+     *
+     * @return array
+     */
+    protected function getGroupBy()
+    {
+        if (array_key_exists('groupBy', $this->searchable)) {
+            return $this->searchable['groupBy'];
+        }
+
+        return false;
+    }
+
+    /**
      * Returns the table columns.
      *
      * @return array
@@ -154,26 +168,29 @@ trait SearchableTrait
      */
     protected function makeGroupBy(Builder $query)
     {
-        $driver = $this->getDatabaseDriver();
-        if ($driver == 'sqlsrv') {
-            $columns = $this->getTableColumns();
+        if ($groupBy = $this->getGroupBy()) {
+            $query->groupBy($groupBy);
         } else {
-            $id = $this->getTable() . '.' .$this->primaryKey;
+            $driver = $this->getDatabaseDriver();
+
+            if ($driver == 'sqlsrv') {
+                $columns = $this->getTableColumns();
+            } else {
+                $columns = $this->getTable() . '.' .$this->primaryKey;
+            }
+
+            $query->groupBy($columns);
+
             $joins = array_keys(($this->getJoins()));
 
             foreach ($this->getColumns() as $column => $relevance) {
-
-                array_map(function($join) use ($column, $query){
-
-                    if(Str::contains($column, $join)){
-                        $query->groupBy("$column");
+                array_map(function ($join) use ($column, $query) {
+                    if (Str::contains($column, $join)) {
+                        $query->groupBy($column);
                     }
-
                 }, $joins);
-
             }
         }
-        $query->groupBy($id);
     }
 
     /**
