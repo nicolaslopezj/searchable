@@ -33,10 +33,10 @@ class User extends \Eloquent
      */
     protected $searchable = [
         'columns' => [
-            'first_name' => 10,
-            'last_name' => 10,
-            'bio' => 2,
-            'email' => 5,
+            'users.first_name' => 10,
+            'users.last_name' => 10,
+            'users.bio' => 2,
+            'users.email' => 5,
             'posts.title' => 2,
             'posts.body' => 1,
         ],
