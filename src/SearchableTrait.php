@@ -281,6 +281,11 @@ trait SearchableTrait
      * @return string
      */
     protected function getCaseCompare($column, $compare, $relevance) {
+        if($this->getDatabaseDriver() == 'pgsql') {
+            $field = "LOWER(" . $column . ") " . $compare . " ?";    
+            return '(case when ' . $field . ' then ' . $relevance . ' else 0 end)';
+        }
+
         $column = str_replace('.', '`.`', $column);
         $field = "LOWER(`" . $column . "`) " . $compare . " ?";
         return '(case when ' . $field . ' then ' . $relevance . ' else 0 end)';
@@ -309,6 +314,9 @@ trait SearchableTrait
      * @param \Illuminate\Database\Eloquent\Builder $original
      */
     protected function mergeQueries(Builder $clone, Builder $original) {
+        if($this->getDatabaseDriver() == 'pgsql'){
+            $original->from(DB::connection($this->connection)->raw("({$clone->toSql()}) as {$this->getTable()}"));
+        }
         $original->from(DB::connection($this->connection)->raw("({$clone->toSql()}) as `{$this->getTable()}`"));
         $original->mergeBindings($clone->getQuery());
     }
