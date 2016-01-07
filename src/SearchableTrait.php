@@ -316,8 +316,9 @@ trait SearchableTrait
     protected function mergeQueries(Builder $clone, Builder $original) {
         if($this->getDatabaseDriver() == 'pgsql'){
             $original->from(DB::connection($this->connection)->raw("({$clone->toSql()}) as {$this->getTable()}"));
+        }else{
+            $original->from(DB::connection($this->connection)->raw("({$clone->toSql()}) as `{$this->getTable()}`"));
         }
-        $original->from(DB::connection($this->connection)->raw("({$clone->toSql()}) as `{$this->getTable()}`"));
         $original->mergeBindings($clone->getQuery());
     }
 }
