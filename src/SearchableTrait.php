@@ -58,9 +58,10 @@ trait SearchableTrait
             $relevance_count += $relevance;
             $queries = $this->getSearchQueriesForColumn($query, $column, $relevance, $words);
 
-            if ( $entireText === true )
+            if ( $entireText === true && count($words) > 1 )
             {
-                $queries[] = $this->getSearchQuery($query, $column, $relevance, [$search], 30, '', '%');
+                $queries[] = $this->getSearchQuery($query, $column, $relevance, [$search], 50, '', '');
+                $queries[] = $this->getSearchQuery($query, $column, $relevance, [$search], 30, '%', '%');
             }
 
             foreach ($queries as $select)
@@ -286,7 +287,7 @@ trait SearchableTrait
      */
     protected function getCaseCompare($column, $compare, $relevance) {
         if($this->getDatabaseDriver() == 'pgsql') {
-            $field = "LOWER(" . $column . ") " . $compare . " ?";    
+            $field = "LOWER(" . $column . ") " . $compare . " ?";
             return '(case when ' . $field . ' then ' . $relevance . ' else 0 end)';
         }
 
