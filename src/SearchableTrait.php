@@ -28,14 +28,15 @@ trait SearchableTrait
      * @param string $search
      * @param float|null $threshold
      * @param  boolean $entireText
+     * @param  boolean $entireTextOnly
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeSearch(Builder $q, $search, $threshold = null, $entireText = false)
+    public function scopeSearch(Builder $q, $search, $threshold = null, $entireText = false, $entireTextOnly = false)
     {
-        return $this->scopeSearchRestricted($q, $search, null, $threshold, $entireText);
+        return $this->scopeSearchRestricted($q, $search, null, $threshold, $entireText, $entireTextOnly);
     }
 
-    public function scopeSearchRestricted(Builder $q, $search, $restriction, $threshold = null, $entireText = false)
+    public function scopeSearchRestricted(Builder $q, $search, $restriction, $threshold = null, $entireText = false, $entireTextOnly = false)
     {
         $query = clone $q;
         $query->select($this->getTable() . '.*');
@@ -56,9 +57,14 @@ trait SearchableTrait
         foreach ($this->getColumns() as $column => $relevance)
         {
             $relevance_count += $relevance;
-            $queries = $this->getSearchQueriesForColumn($query, $column, $relevance, $words);
 
-            if ( $entireText === true && count($words) > 1 )
+            if (!$entireTextOnly) {
+                $queries = $this->getSearchQueriesForColumn($query, $column, $relevance, $words);
+            } else {
+                $queries = [];
+            }
+
+            if ( ($entireText === true && count($words) > 1) || $entireTextOnly === true )
             {
                 $queries[] = $this->getSearchQuery($query, $column, $relevance, [$search], 50, '', '');
                 $queries[] = $this->getSearchQuery($query, $column, $relevance, [$search], 30, '%', '%');
@@ -320,7 +326,7 @@ trait SearchableTrait
      */
     protected function mergeQueries(Builder $clone, Builder $original) {
         $tableName = DB::connection($this->connection)->getTablePrefix() . $this->getTable();
-		if ($this->getDatabaseDriver() == 'pgsql') {
+        if ($this->getDatabaseDriver() == 'pgsql') {
             $original->from(DB::connection($this->connection)->raw("({$clone->toSql()}) as {$tableName}"));
         } else {
             $original->from(DB::connection($this->connection)->raw("({$clone->toSql()}) as `{$tableName}`"));
