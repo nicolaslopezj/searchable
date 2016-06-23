@@ -103,6 +103,22 @@ $users = User::where('status', 'active')
 
 The above, will return all users in order of relevance.
 
+## Entire Text search
+
+By default, multi-word search terms are split and Searchable searches for each word individually. Relevance plays a role in prioritizing matches that matched on multiple words. If you want to prioritize matches that include the multi-word search (thus, without splitting into words) you can enable full text search by setting the third value to true. Example:
+
+```php
+// Prioritize matches containing "John Doe" above matches containing only "John" or "Doe".
+$users = User::search("John Doe", null, true)->get();
+```
+
+If you explicitly want to search for full text matches only, you can disable multi-word splitting by setting the fourth parameter to true.
+
+```php
+// Do not include matches that only matched "John" OR "Doe".
+$users = User::search("John Doe", null, true, true)->get();
+```
+
 # How does it work?
 
 Searchable builds a query that search through your model using Laravel's Eloquent.
