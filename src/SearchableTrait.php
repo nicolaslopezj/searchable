@@ -110,7 +110,13 @@ trait SearchableTrait
     protected function getColumns()
     {
         if (array_key_exists('columns', $this->searchable)) {
-            return $this->searchable['columns'];
+            $driver = $this->getDatabaseDriver();
+            $prefix = config("database.connections.$driver.prefix");
+            $columns = [];
+            foreach($this->searchable['columns'] as $column => $priority){
+                $columns[$prefix . $column] = $priority;
+            }
+            return $columns;
         } else {
             return DB::connection()->getSchemaBuilder()->getColumnListing($this->table);
         }
