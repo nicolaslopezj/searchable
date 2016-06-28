@@ -117,7 +117,7 @@ trait SearchableTrait
     {
         if (array_key_exists('columns', $this->searchable)) {
             $driver = $this->getDatabaseDriver();
-            $prefix = config("database.connections.$driver.prefix");
+            $prefix = Config::get("database.connections.$driver.prefix");
             $columns = [];
             foreach($this->searchable['columns'] as $column => $priority){
                 $columns[$prefix . $column] = $priority;
