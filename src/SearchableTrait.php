@@ -236,7 +236,7 @@ trait SearchableTrait
 
         $relevance_count=number_format($relevance_count,2,'.','');
 
-        $query->havingRaw("$comparator > $relevance_count");
+        $query->havingRaw("$comparator >= $relevance_count");
         $query->orderBy('relevance', 'desc');
 
         // add bindings to postgres
