@@ -318,7 +318,7 @@ trait SearchableTrait
         $count = $this->getDatabaseDriver() != 'mysql' ? 2 : 1;
         for ($i = 0; $i < $count; $i++) {
             foreach($bindings as $binding) {
-                $type = $i == 0 ? 'select' : 'having';
+                $type = $i == 1 ? 'select' : 'having';
                 $query->addBinding($binding, $type);
             }
         }
