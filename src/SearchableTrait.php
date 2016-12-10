@@ -87,7 +87,11 @@ trait SearchableTrait
 
         $this->makeGroupBy($query);
 
+        $clone_bindings = $query->getBindings();
+        $query->setBindings([]);
+
         $this->addBindingsToQuery($query, $this->search_bindings);
+        $this->addBindingsToQuery($query, $clone_bindings);
 
         if(is_callable($restriction)) {
             $query = $restriction($query);
@@ -337,6 +341,12 @@ trait SearchableTrait
         } else {
             $original->from(DB::connection($this->connection)->raw("({$clone->toSql()}) as `{$tableName}`"));
         }
-        $original->mergeBindings($clone->getQuery());
+
+        $original->setBindings(
+            array_merge_recursive(
+                $clone->getBindings(),
+                $original->getBindings()
+            )
+        );
     }
 }
