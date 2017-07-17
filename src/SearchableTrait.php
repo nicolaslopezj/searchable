@@ -49,9 +49,9 @@ trait SearchableTrait
 
         $search = mb_strtolower(trim($search));
         preg_match_all('/(?:")((?:\\\\.|[^\\\\"])*)(?:")|(\S+)/', $search, $matches);
-        $words = [];
-        for ($i = 1; $i < count($matches); $i++) {
-          $words = $i == 1 ? $matches[$i] : array_filter($words) + $matches[$i];
+        $words = $matches[1];
+        for ($i = 2; $i < count($matches); $i++) {
+          $words = array_filter($words) + $matches[$i];
         }
 
         $selects = [];
