@@ -48,7 +48,11 @@ trait SearchableTrait
         }
 
         $search = mb_strtolower(trim($search));
-        $words = explode(' ', $search);
+        preg_match_all('/(?:")((?:\\\\.|[^\\\\"])*)(?:")|(\S+)/', $search, $matches);
+        $words = $matches[1];
+        for ($i = 2; $i < count($matches); $i++) {
+          $words = array_filter($words) + $matches[$i];
+        }
 
         $selects = [];
         $this->search_bindings = [];
