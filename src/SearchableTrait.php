@@ -181,7 +181,7 @@ trait SearchableTrait
             $query->leftJoin($table, function ($join) use ($keys) {
                 $join->on($keys[0], '=', $keys[1]);
                 if (array_key_exists(2, $keys) && array_key_exists(3, $keys)) {
-                    $join->where($keys[2], '=', $keys[3]);
+                    $join->whereRaw($keys[2] . ' = "' . $keys[3] . '"');
                 }
             });
         }
