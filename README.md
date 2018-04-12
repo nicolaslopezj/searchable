@@ -71,6 +71,12 @@ $users = User::search($query)->get();
 $users = User::search($query)
             ->with('posts')
             ->get();
+
+// Include orderBy and leftJoin methods when using sqlsrv
+$users = User::search($query)
+            ->leftJoin('users', 'users.id', '=', 'posts.user_id')
+            ->orderBy('relevance', 'desc')
+            ->get();
 ```
 
 
