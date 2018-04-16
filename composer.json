@@ -1,5 +1,5 @@
 {
-    "name": "nicolaslopezj/searchable",
+    "name": "jabbtech/searchable",
     "description": "Eloquent model search trait.",
     "keywords": ["laravel", "eloquent", "search", "searchable", "database", "model"],
     "license": "MIT",
@@ -7,16 +7,28 @@
         {
             "name": "Nicolas Lopez",
             "email": "nicolaslopezj@me.com"
+        },
+        {
+            "name": "Curtis Weeks",
+            "email": "curtis@jabbtech.com"
+        }
+    ],
+    "repositories": [
+        {
+            "type" : "git",
+            "url": "https://github.com/curtisweeks/searchable",
+            "reference": "master"
         }
     ],
     "require": {
         "php": ">=5.4.0",
         "illuminate/database": "4.2.x|~5.0",
-        "ext-mbstring": "*"
+        "ext-mbstring": "*",
+        "curtisweeks/searchable": "1.*"
     },
     "autoload": {
         "psr-4": {
-            "Nicolaslopezj\\Searchable\\": "src/"
+            "Jabbtech\\Searchable\\": "src/"
         }
     },
     "minimum-stability": "stable"
