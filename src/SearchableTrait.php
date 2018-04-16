@@ -38,8 +38,16 @@ trait SearchableTrait
 
     public function scopeSearchRestricted(Builder $q, $search, $restriction, $threshold = null, $entireText = false, $entireTextOnly = false)
     {
+        
         $query = clone $q;
-        $query->select($this->getTable() . '.*');
+        $driver = $this->getDatabaseDriver();
+
+        if ($driver != 'sqlsrv') {
+            $query->select($this->getTable() . '.*');
+        } else {
+            $columns = $this->formatRawSqlsrv($q);
+            $query->select(DB::raw('TOP 100 PERCENT '.$columns));
+        }
         $this->makeJoins($query);
 
         if ( ! $search)
@@ -89,7 +97,7 @@ trait SearchableTrait
 
         $this->filterQueryWithRelevance($query, $selects, $threshold);
 
-        $this->makeGroupBy($query);
+        $this->makeGroupBy($query, $q);
 
         $clone_bindings = $query->getBindings();
         $query->setBindings([]);
@@ -151,13 +159,46 @@ trait SearchableTrait
     }
 
     /**
+     * Formats table and column names for sqlsrv
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     */
+    protected function formatRawSqlsrv($query) 
+    {
+
+        if (!empty($query->getQuery()->columns)) {
+            $selects = collect($query->getQuery()->columns);
+        } else {
+            $selects = collect(DB::connection($this->connection)->getSchemaBuilder()->getColumnListing($this->table));
+        }
+
+        $identifiers = $selects->map(function ($item, $key) {
+            $words = explode('.', $item);
+            foreach($words as $word) {
+                $identifier[] = '['.$word.']';
+            }
+            return $identifier;
+        });
+        foreach($identifiers as $identifier) {
+            $columnlist[] = implode ('.', $identifier);
+        }
+        $columns = implode(', ', $columnlist);
+        return $columns;
+    }
+
+
+    /**
      * Returns the table columns.
      *
      * @return array
      */
     public function getTableColumns()
     {
-        return $this->searchable['table_columns'];
+        if (array_key_exists('table_columns', $this->searchable)) {
+            return $this->searchable['table_columns'];
+        }
+
+        return false;
     }
 
     /**
@@ -192,18 +233,17 @@ trait SearchableTrait
      *
      * @param \Illuminate\Database\Eloquent\Builder $query
      */
-    protected function makeGroupBy(Builder $query)
+    protected function makeGroupBy(Builder $query, $q)
     {
+
+        $driver = $this->getDatabaseDriver();
         if ($groupBy = $this->getGroupBy()) {
             $query->groupBy($groupBy);
+        } elseif ($driver == 'sqlsrv') {
+            $columns = $this->formatRawSqlsrv($q);
+            $query->groupBy(DB::raw($columns));
         } else {
-            $driver = $this->getDatabaseDriver();
-
-            if ($driver == 'sqlsrv') {
-                $columns = $this->getTableColumns();
-            } else {
-                $columns = $this->getTable() . '.' .$this->primaryKey;
-            }
+            $columns = $this->getTable() . '.' .$this->primaryKey;
 
             $query->groupBy($columns);
 
@@ -227,6 +267,7 @@ trait SearchableTrait
      */
     protected function addSelectsToQuery(Builder $query, array $selects)
     {
+
         $selects = new Expression('max(' . implode(' + ', $selects) . ') as relevance');
         $query->addSelect($selects);
     }
@@ -245,7 +286,10 @@ trait SearchableTrait
         $relevance_count=number_format($relevance_count,2,'.','');
 
         $query->havingRaw("$comparator >= $relevance_count");
-        $query->orderBy('relevance', 'desc');
+
+        if ($this->getDatabaseDriver() != 'sqlsrv') {
+            $query->orderBy('relevance', 'desc');
+        }
 
         // add bindings to postgres
     }
@@ -311,6 +355,12 @@ trait SearchableTrait
             return '(case when ' . $field . ' then ' . $relevance . ' else 0 end)';
         }
 
+        if ($this->getDatabaseDriver() == 'sqlsrv') {
+            $column = str_replace('.', '].[', $column);
+            $field = "LOWER([" . $column . "]) " . $compare . " ?";
+            return '(case when ' . $field . ' then ' . $relevance . ' else 0 end)';
+        }
+
         $column = str_replace('.', '`.`', $column);
         $field = "LOWER(`" . $column . "`) " . $compare . " ?";
         return '(case when ' . $field . ' then ' . $relevance . ' else 0 end)';
@@ -342,6 +392,8 @@ trait SearchableTrait
         $tableName = DB::connection($this->connection)->getTablePrefix() . $this->getTable();
         if ($this->getDatabaseDriver() == 'pgsql') {
             $original->from(DB::connection($this->connection)->raw("({$clone->toSql()}) as {$tableName}"));
+        } elseif ($this->getDatabaseDriver() == 'sqlsrv') { 
+            $original->from(DB::connection($this->connection)->raw("({$clone->toSql()}) as [{$tableName}]"));
         } else {
             $original->from(DB::connection($this->connection)->raw("({$clone->toSql()}) as `{$tableName}`"));
         }

@@ -1,7 +1,7 @@
 Searchable, a search trait for Laravel
 ==========================================
 
-Searchable is a trait for Laravel 4.2+ and Laravel 5.0 that adds a simple search function to Eloquent Models.
+Searchable is a trait for Laravel 4.2+ and Laravel 5.0+ that adds a simple search function to Eloquent Models.
 
 Searchable allows you to perform searches in a table giving priorities to each field for the table and it's relations.
 
@@ -12,7 +12,7 @@ This is not optimized for big searches, but sometimes you just need to make it s
 Simply add the package to your `composer.json` file and run `composer update`.
 
 ```
-"nicolaslopezj/searchable": "1.*"
+"jabbtech/searchable": "1.*"
 ```
 
 # Usage
@@ -20,7 +20,7 @@ Simply add the package to your `composer.json` file and run `composer update`.
 Add the trait to your model and your search rules.
 
 ```php
-use Nicolaslopezj\Searchable\SearchableTrait;
+use Jabbtech\Searchable\SearchableTrait;
 
 class User extends \Eloquent
 {
@@ -70,6 +70,12 @@ $users = User::search($query)->get();
 // It will not get the relations if you don't do this
 $users = User::search($query)
             ->with('posts')
+            ->get();
+
+// Include orderBy and leftJoin methods when using sqlsrv
+$users = User::search($query)
+            ->leftJoin('users', 'users.id', '=', 'posts.user_id')
+            ->orderBy('relevance', 'desc')
             ->get();
 ```
 
@@ -128,12 +134,12 @@ $users = User::search("John Doe", null, true, true)->get();
 
 # How does it work?
 
-Searchable builds a query that search through your model using Laravel's Eloquent.
+Searchable builds a query that searches through your model using Laravel's Eloquent.
 Here is an example query
 
 #### Eloquent Model:
 ```php
-use Nicolaslopezj\Searchable\SearchableTrait;
+use Jabbtech\Searchable\SearchableTrait;
 
 class User extends \Eloquent
 {
@@ -215,5 +221,3 @@ order by `relevance` desc
 ## Contributing
 
 Anyone is welcome to contribute. Fork, make your changes, and then submit a pull request.
-
-[![Support via Gittip](https://rawgithub.com/twolfson/gittip-badge/0.2.0/dist/gittip.png)](https://gratipay.com/nicolaslopezj/)
