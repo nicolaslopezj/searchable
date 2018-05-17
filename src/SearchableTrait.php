@@ -1,7 +1,6 @@
 <?php namespace Nicolaslopezj\Searchable;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Query\Expression;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -51,7 +50,7 @@ trait SearchableTrait
         preg_match_all('/(?:")((?:\\\\.|[^\\\\"])*)(?:")|(\S+)/', $search, $matches);
         $words = $matches[1];
         for ($i = 2; $i < count($matches); $i++) {
-          $words = array_filter($words) + $matches[$i];
+            $words = array_filter($words) + $matches[$i];
         }
 
         $selects = [];
@@ -90,12 +89,6 @@ trait SearchableTrait
         $this->filterQueryWithRelevance($query, $selects, $threshold);
 
         $this->makeGroupBy($query);
-
-        $clone_bindings = $query->getBindings();
-        $query->setBindings([]);
-
-        $this->addBindingsToQuery($query, $this->search_bindings);
-        $this->addBindingsToQuery($query, $clone_bindings);
 
         if(is_callable($restriction)) {
             $query = $restriction($query);
@@ -227,8 +220,7 @@ trait SearchableTrait
      */
     protected function addSelectsToQuery(Builder $query, array $selects)
     {
-        $selects = new Expression('max(' . implode(' + ', $selects) . ') as relevance');
-        $query->addSelect($selects);
+        $query->selectRaw('max(' . implode(' + ', $selects) . ') as relevance', $this->search_bindings);
     }
 
     /**
@@ -314,22 +306,6 @@ trait SearchableTrait
         $column = str_replace('.', '`.`', $column);
         $field = "LOWER(`" . $column . "`) " . $compare . " ?";
         return '(case when ' . $field . ' then ' . $relevance . ' else 0 end)';
-    }
-
-    /**
-     * Adds the bindings to the query.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param array $bindings
-     */
-    protected function addBindingsToQuery(Builder $query, array $bindings) {
-        $count = $this->getDatabaseDriver() != 'mysql' ? 2 : 1;
-        for ($i = 0; $i < $count; $i++) {
-            foreach($bindings as $binding) {
-                $type = $i == 1 ? 'select' : 'having';
-                $query->addBinding($binding, $type);
-            }
-        }
     }
 
     /**
