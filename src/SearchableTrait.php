@@ -322,11 +322,14 @@ trait SearchableTrait
             $original->from(DB::connection($this->connection)->raw("({$clone->toSql()}) as `{$tableName}`"));
         }
 
-        $original->setBindings(
-            array_merge_recursive(
-                $clone->getBindings(),
-                $original->getBindings()
-            )
+        // First create a new array merging bindings
+        $mergedBindings = array_merge_recursive(
+            $clone->getBindings(),
+            $original->getBindings()
         );
+
+        // Then apply bindings WITHOUT global scopes which are already included. If not, there is a strange behaviour
+        // with some scope's bindings remaning
+        $original->withoutGlobalScopes()->setBindings($mergedBindings);
     }
 }
