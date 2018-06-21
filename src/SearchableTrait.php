@@ -41,7 +41,7 @@ trait SearchableTrait
         $query->select($this->getTable() . '.*');
         $this->makeJoins($query);
 
-        if ( ! $search)
+       if ($search === false)
         {
             return $q;
         }
