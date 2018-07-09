@@ -75,7 +75,9 @@ trait SearchableTrait
 
             foreach ($queries as $select)
             {
-                $selects[] = $select;
+                if (!empty($select)) {
+                    $selects[] = $select;
+                }
             }
         }
 
@@ -86,7 +88,9 @@ trait SearchableTrait
             $threshold = $relevance_count / 4;
         }
 
-        $this->filterQueryWithRelevance($query, $selects, $threshold);
+        if (!empty($selects)) {
+            $this->filterQueryWithRelevance($query, $selects, $threshold);
+        }
 
         $this->makeGroupBy($query);
 
@@ -220,7 +224,9 @@ trait SearchableTrait
      */
     protected function addSelectsToQuery(Builder $query, array $selects)
     {
-        $query->selectRaw('max(' . implode(' + ', $selects) . ') as relevance', $this->search_bindings);
+        if (!empty($selects)) {
+            $query->selectRaw('max(' . implode(' + ', $selects) . ') as relevance', $this->search_bindings);
+        }
     }
 
     /**
@@ -333,3 +339,4 @@ trait SearchableTrait
         $original->withoutGlobalScopes()->setBindings($mergedBindings);
     }
 }
+
