@@ -242,7 +242,12 @@ trait SearchableTrait
 
         $relevance_count=number_format($relevance_count,2,'.','');
 
-        $query->havingRaw("$comparator >= $relevance_count");
+        if ($this->getDatabaseDriver() == 'mysql') {
+            $bindings = [];
+        } else {
+            $bindings = $this->search_bindings;
+        }
+        $query->havingRaw("$comparator >= $relevance_count", $bindings);
         $query->orderBy('relevance', 'desc');
 
         // add bindings to postgres
@@ -339,4 +344,3 @@ trait SearchableTrait
         $original->withoutGlobalScopes()->setBindings($mergedBindings);
     }
 }
-
