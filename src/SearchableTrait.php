@@ -85,7 +85,7 @@ trait SearchableTrait
 
         // Default the threshold if no value was passed.
         if (is_null($threshold)) {
-            $threshold = $relevance_count / 4;
+            $threshold = $relevance_count / count($this->getColumns());
         }
 
         if (!empty($selects)) {
