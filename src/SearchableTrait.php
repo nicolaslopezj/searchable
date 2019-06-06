@@ -225,7 +225,7 @@ trait SearchableTrait
     protected function addSelectsToQuery(Builder $query, array $selects)
     {
         if (!empty($selects)) {
-            $query->selectRaw('max(' . implode(' + ', $selects) . ') as relevance', $this->search_bindings);
+            $query->selectRaw('max(' . implode(' + ', $selects) . ') as ' . $this->getRelevanceField(), $this->search_bindings);
         }
     }
 
@@ -238,7 +238,7 @@ trait SearchableTrait
      */
     protected function filterQueryWithRelevance(Builder $query, array $selects, $relevance_count)
     {
-        $comparator = $this->getDatabaseDriver() != 'mysql' ? implode(' + ', $selects) : 'relevance';
+        $comparator = $this->getDatabaseDriver() != 'mysql' ? implode(' + ', $selects) : $this->getRelevanceField();
 
         $relevance_count=number_format($relevance_count,2,'.','');
 
@@ -248,7 +248,7 @@ trait SearchableTrait
             $bindings = $this->search_bindings;
         }
         $query->havingRaw("$comparator >= $relevance_count", $bindings);
-        $query->orderBy('relevance', 'desc');
+        $query->orderBy($this->getRelevanceField(), 'desc');
 
         // add bindings to postgres
     }
@@ -342,5 +342,20 @@ trait SearchableTrait
         // Then apply bindings WITHOUT global scopes which are already included. If not, there is a strange behaviour
         // with some scope's bindings remaning
         $original->withoutGlobalScopes()->setBindings($mergedBindings);
+    }
+
+    /**
+     * Returns the relevance field name, alias of ratio column in the query.
+     *
+     * @return string
+     */
+    protected function getRelevanceField()
+    {
+        if ($this->relevanceField ?? false) {
+            return $this->relevanceField;
+        }
+
+        // If property $this->relevanceField is not setted, return the default
+        return 'relevance';
     }
 }
