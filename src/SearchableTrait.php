@@ -1,6 +1,7 @@
 <?php namespace Nicolaslopezj\Searchable;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -164,7 +165,7 @@ trait SearchableTrait
      */
     protected function getJoins()
     {
-        return array_get($this->searchable, 'joins', []);
+        return Arr::get($this->searchable, 'joins', []);
     }
 
     /**
