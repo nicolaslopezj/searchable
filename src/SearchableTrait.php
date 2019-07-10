@@ -352,7 +352,7 @@ trait SearchableTrait
      */
     protected function getRelevanceField()
     {
-        if ($this->relevanceField ?? false) {
+        if (isset($this->relevanceField) && !empty($this->relevanceField)) {
             return $this->relevanceField;
         }
 
