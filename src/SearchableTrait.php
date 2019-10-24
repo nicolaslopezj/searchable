@@ -264,13 +264,11 @@ trait SearchableTrait
      */
     protected function getSearchQueriesForColumn($column, $relevance, array $words)
     {
-        $queries = [];
-
-        $queries[] = $this->getSearchQuery($column, $relevance, $words, 15);
-        $queries[] = $this->getSearchQuery($column, $relevance, $words, 5, '', '%');
-        $queries[] = $this->getSearchQuery($column, $relevance, $words, 1, '%', '%');
-
-        return $queries;
+        return [
+            $this->getSearchQuery($column, $relevance, $words, 15),
+            $this->getSearchQuery($column, $relevance, $words, 5, '', '%'),
+            $this->getSearchQuery($column, $relevance, $words, 1, '%', '%')
+        ];
     }
 
     /**
