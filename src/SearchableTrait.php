@@ -63,15 +63,15 @@ trait SearchableTrait
             $relevance_count += $relevance;
 
             if (!$entireTextOnly) {
-                $queries = $this->getSearchQueriesForColumn($query, $column, $relevance, $words);
+                $queries = $this->getSearchQueriesForColumn($column, $relevance, $words);
             } else {
                 $queries = [];
             }
 
             if ( ($entireText === true && count($words) > 1) || $entireTextOnly === true )
             {
-                $queries[] = $this->getSearchQuery($query, $column, $relevance, [$search], 50, '', '');
-                $queries[] = $this->getSearchQuery($query, $column, $relevance, [$search], 30, '%', '%');
+                $queries[] = $this->getSearchQuery($column, $relevance, [$search], 50, '', '');
+                $queries[] = $this->getSearchQuery($column, $relevance, [$search], 30, '%', '%');
             }
 
             foreach ($queries as $select)
@@ -257,19 +257,18 @@ trait SearchableTrait
     /**
      * Returns the search queries for the specified column.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
      * @param string $column
      * @param float $relevance
      * @param array $words
      * @return array
      */
-    protected function getSearchQueriesForColumn(Builder $query, $column, $relevance, array $words)
+    protected function getSearchQueriesForColumn($column, $relevance, array $words)
     {
         $queries = [];
 
-        $queries[] = $this->getSearchQuery($query, $column, $relevance, $words, 15);
-        $queries[] = $this->getSearchQuery($query, $column, $relevance, $words, 5, '', '%');
-        $queries[] = $this->getSearchQuery($query, $column, $relevance, $words, 1, '%', '%');
+        $queries[] = $this->getSearchQuery($column, $relevance, $words, 15);
+        $queries[] = $this->getSearchQuery($column, $relevance, $words, 5, '', '%');
+        $queries[] = $this->getSearchQuery($column, $relevance, $words, 1, '%', '%');
 
         return $queries;
     }
@@ -277,7 +276,6 @@ trait SearchableTrait
     /**
      * Returns the sql string for the given parameters.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
      * @param string $column
      * @param string $relevance
      * @param array $words
@@ -287,7 +285,7 @@ trait SearchableTrait
      * @param string $post_word
      * @return string
      */
-    protected function getSearchQuery(Builder $query, $column, $relevance, array $words, $relevance_multiplier, $pre_word = '', $post_word = '')
+    protected function getSearchQuery($column, $relevance, array $words, $relevance_multiplier, $pre_word = '', $post_word = '')
     {
         $like_comparator = $this->getDatabaseDriver() == 'pgsql' ? 'ILIKE' : 'LIKE';
         $cases = [];
