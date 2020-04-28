@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
  * @package Nicolaslopezj\Searchable
  * @property array $searchable
  * @property string $table
- * @property string $primaryKey
+ * @method string getKeyName()
  * @method string getTable()
  */
 trait SearchableTrait
@@ -198,7 +198,7 @@ trait SearchableTrait
             if ($this->isSqlsrvDatabase()) {
                 $columns = $this->getTableColumns();
             } else {
-                $columns = $this->getTable() . '.' .$this->primaryKey;
+                $columns = $this->getTable() . '.' .$this->getKeyName();
             }
 
             $query->groupBy($columns);
