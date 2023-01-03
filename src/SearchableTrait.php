@@ -359,9 +359,9 @@ trait SearchableTrait
             $original->from(DB::connection($this->connection)->raw("({$clone->toSql()}) as `{$tableName}`"));
         }
 
-        // First create a new array merging bindings
+        // First create a new array merging bindings, remove global scopes from clone.
         $mergedBindings = array_merge_recursive(
-            $clone->getBindings(),
+            $clone->withoutGlobalScopes()->getBindings(),
             $original->getBindings()
         );
 
