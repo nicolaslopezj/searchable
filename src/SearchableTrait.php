@@ -27,8 +27,8 @@ trait SearchableTrait
      * @param \Illuminate\Database\Eloquent\Builder $q
      * @param string $search
      * @param float|null $threshold
-     * @param  boolean $entireText
-     * @param  boolean $entireTextOnly
+     * @param boolean $entireText
+     * @param boolean $entireTextOnly
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeSearch(Builder $q, $search, $threshold = null, $entireText = false, $entireTextOnly = false)
@@ -39,11 +39,15 @@ trait SearchableTrait
     public function scopeSearchRestricted(Builder $q, $search, $restriction, $threshold = null, $entireText = false, $entireTextOnly = false)
     {
         $query = clone $q;
-        $query->select($this->getTable() . '.*');
+        if ($this->isSqlsrvDatabase()) {
+            $query->select(DB::raw('TOP 100 PERCENT ' . $this->getTable() . '.*'));
+        } else {
+            $query->select($this->getTable() . '.*');
+        }
+
         $this->makeJoins($query);
 
-       if ($search === false)
-        {
+        if ($search === false) {
             return $q;
         }
 
@@ -58,8 +62,7 @@ trait SearchableTrait
         $this->search_bindings = [];
         $relevance_count = 0;
 
-        foreach ($this->getColumns() as $column => $relevance)
-        {
+        foreach ($this->getColumns() as $column => $relevance) {
             $relevance_count += $relevance;
 
             if (!$entireTextOnly) {
@@ -68,14 +71,12 @@ trait SearchableTrait
                 $queries = [];
             }
 
-            if ( ($entireText === true && count($words) > 1) || $entireTextOnly === true )
-            {
+            if (($entireText === true && count($words) > 1) || $entireTextOnly === true) {
                 $queries[] = $this->getSearchQuery($column, $relevance, [$search], 50, '', '');
                 $queries[] = $this->getSearchQuery($column, $relevance, [$search], 30, '%', '%');
             }
 
-            foreach ($queries as $select)
-            {
+            foreach ($queries as $select) {
                 if (!empty($select)) {
                     $selects[] = $select;
                 }
@@ -95,7 +96,7 @@ trait SearchableTrait
 
         $this->makeGroupBy($query);
 
-        if(is_callable($restriction)) {
+        if (is_callable($restriction)) {
             $query = $restriction($query);
         }
 
@@ -109,7 +110,8 @@ trait SearchableTrait
      *
      * @return array
      */
-    protected function getDatabaseDriver() {
+    protected function getDatabaseDriver()
+    {
         $key = $this->connection ?: Config::get('database.default');
         return Config::get('database.connections.' . $key . '.driver');
     }
@@ -125,7 +127,7 @@ trait SearchableTrait
             $driver = $this->getDatabaseDriver();
             $prefix = Config::get("database.connections.$driver.prefix");
             $columns = [];
-            foreach($this->searchable['columns'] as $column => $priority){
+            foreach ($this->searchable['columns'] as $column => $priority) {
                 $columns[$prefix . $column] = $priority;
             }
             return $columns;
@@ -155,7 +157,11 @@ trait SearchableTrait
      */
     public function getTableColumns()
     {
-        return $this->searchable['table_columns'];
+        return collect(DB::connection($this->connection)->getSchemaBuilder()->getColumnListing($this->getTable()))
+            ->map(function ($item) {
+                return $this->getTable() . '.' . $item;
+            })
+            ->toArray();
     }
 
     /**
@@ -198,7 +204,7 @@ trait SearchableTrait
             if ($this->isSqlsrvDatabase()) {
                 $columns = $this->getTableColumns();
             } else {
-                $columns = $this->getTable() . '.' .$this->primaryKey;
+                $columns = $this->getTable() . '.' . $this->primaryKey;
             }
 
             $query->groupBy($columns);
@@ -249,7 +255,7 @@ trait SearchableTrait
     {
         $comparator = $this->isMysqlDatabase() ? $this->getRelevanceField() : implode(' + ', $selects);
 
-        $relevance_count=number_format($relevance_count,2,'.','');
+        $relevance_count = number_format($relevance_count, 2, '.', '');
 
         if ($this->isMysqlDatabase()) {
             $bindings = [];
@@ -307,8 +313,7 @@ trait SearchableTrait
         $like_comparator = $this->isPostgresqlDatabase() ? 'ILIKE' : 'LIKE';
         $cases = [];
 
-        foreach ($words as $word)
-        {
+        foreach ($words as $word) {
             $cases[] = $this->getCaseCompare($column, $like_comparator, $relevance * $relevance_multiplier);
             $this->search_bindings[] = $pre_word . $word . $post_word;
         }
@@ -334,9 +339,17 @@ trait SearchableTrait
      * @param float $relevance
      * @return string
      */
-    protected function getCaseCompare($column, $compare, $relevance) {
+    protected function getCaseCompare($column, $compare, $relevance)
+    {
+
         if ($this->isPostgresqlDatabase()) {
             $field = "LOWER(" . $column . ") " . $compare . " ?";
+            return '(case when ' . $field . ' then ' . $relevance . ' else 0 end)';
+        }
+
+        if ($this->isSqlsrvDatabase()) {
+            $column = str_replace('.', '].[', $column);
+            $field = "LOWER([" . $column . "]) " . $compare . " ?";
             return '(case when ' . $field . ' then ' . $relevance . ' else 0 end)';
         }
 
@@ -351,10 +364,13 @@ trait SearchableTrait
      * @param \Illuminate\Database\Eloquent\Builder $clone
      * @param \Illuminate\Database\Eloquent\Builder $original
      */
-    protected function mergeQueries(Builder $clone, Builder $original) {
+    protected function mergeQueries(Builder $clone, Builder $original)
+    {
         $tableName = DB::connection($this->connection)->getTablePrefix() . $this->getTable();
         if ($this->isPostgresqlDatabase()) {
             $original->from(DB::connection($this->connection)->raw("({$clone->toSql()}) as {$tableName}"));
+        } elseif ($this->isSqlsrvDatabase()) {
+            $original->from(DB::connection($this->connection)->raw("({$clone->toSql()}) as [{$tableName}]"));
         } else {
             $original->from(DB::connection($this->connection)->raw("({$clone->toSql()}) as `{$tableName}`"));
         }
