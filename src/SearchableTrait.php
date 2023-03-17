@@ -39,7 +39,7 @@ trait SearchableTrait
     public function scopeSearchRestricted(Builder $q, $search, $restriction, $threshold = null, $entireText = false, $entireTextOnly = false)
     {
         $query = clone $q;
-        $query->select($this->getTable() . '.*');
+        $query->select($this->getTable() . '.*')->withoutGlobalScopes();
         $this->makeJoins($query);
 
        if ($search === false)
